@@ -2,31 +2,41 @@
 
 ## Principios
 
-- Primero lo que toda API necesita para arrancar; nada de reglas de negocio de una app concreta.
+- Una fase por módulo de la v1, en el orden en que los otros módulos los necesitan: las tasas primero, porque los gastos, las compras y las metas convierten montos con ellas.
 - Cada fase termina con `ruff`, `mypy --strict` y `pytest` en verde, y con `docker compose up` funcionando.
-- La plantilla se valida creando la API de Ahorra a partir de ella; lo que falte se corrige primero en la plantilla.
+- Lo que se corrija en la autenticación o la infraestructura heredadas de la plantilla se corrige primero en la plantilla y después se trae acá.
 
-## Fase 0 — Base del proyecto
+## Fase 0 — Base desde la plantilla
 
-Proyecto con uv, herramientas de calidad, configuración, conexión a PostgreSQL, Alembic, Docker y el endpoint `/health`.
+Proyecto creado desde `fastapi-starter-kit`: autenticación, usuarios, `/health`, Docker y calidad. Hecha.
 
-## Fase 1 — Usuarios y autenticación
+## Fase 1 — Tasas de cambio
 
-Usuarios con alta por línea de comandos, login, refresh token rotativo con detección de reúso, logout y `GET /users/me`.
+Consulta periódica de BCV y USDT/Bs, historial de tasas y endpoint con la última tasa conocida.
 
-## Fase 2 — Lista para usar como plantilla
+## Fase 2 — Ingresos recurrentes
 
-Guía para crear una API nueva desde la plantilla, `README.md` y la marca de template en GitHub.
+Reglas de repetición, generación de ocurrencias y confirmación de cada ocurrencia como recibida.
+
+## Fase 3 — Gastos por categoría
+
+Categorías y gastos con su moneda y la tasa vigente al registrarlos.
+
+## Fase 4 — Productos y lista de compras
+
+Catálogo propio, último precio, historial de precios y recomendación de compras.
+
+## Fase 5 — Metas
+
+Monto objetivo en dólares, avance y equivalentes en bolívares.
 
 ## Más adelante
 
-- CI con GitHub Actions (ruff, mypy, pytest contra PostgreSQL).
-- Límite de intentos de login.
-- Paquete compartido para el núcleo de la autenticación, si las copias se vuelven difíciles de mantener.
+- La v2 de la app: escaneo de facturas, precios de supermercados y saldos de Binance.
+- Lo que la plantilla deja para más adelante: CI, limpieza de refresh tokens y límite de intentos de login.
 
 ## Referencias externas
 
-- FastAPI, seguridad con OAuth2 y JWT: https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
-- SQLAlchemy 2.0, extensión asyncio: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
-- Alembic, plantilla async: https://alembic.sqlalchemy.org/en/latest/cookbook.html#using-asyncio-with-alembic
+- Visión del producto: `finance/docs/00-vision.md`.
+- Plantilla de origen: https://github.com/Jeyker-Dev/fastapi-starter-kit
 - OAuth 2.0 Security Best Current Practice (rotación de refresh tokens): https://datatracker.ietf.org/doc/html/rfc9700

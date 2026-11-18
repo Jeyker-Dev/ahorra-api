@@ -1,16 +1,15 @@
-# Documentación de FastAPI Starter Kit
+# Documentación de Ahorra API
 
 ## Mapa
 
 | Archivo | Qué contiene |
 |---|---|
-| [00-vision.md](00-vision.md) | Qué es la plantilla, para quién, alcance y fuera de alcance |
+| [00-vision.md](00-vision.md) | Qué hace la API de Ahorra, alcance de la v1 y fuera de alcance |
 | [01-architecture.md](01-architecture.md) | Stack, estructura de carpetas, capas, convenciones y rutas |
 | [roadmap.md](roadmap.md) | Fases y referencias externas |
 | [areas/auth.md](areas/auth.md) | Endpoints, reglas y errores de autenticación y usuarios |
 | [areas/database.md](areas/database.md) | Tablas, reglas de migraciones y riesgos |
 | [areas/infrastructure.md](areas/infrastructure.md) | Variables de entorno, Docker, salud y comandos de calidad |
-| [areas/antigravity-build-prompt.md](areas/antigravity-build-prompt.md) | Prompt para construir la plantilla con Antigravity |
 | [decisions/](decisions/) | ADRs, numerados en orden |
 | [tasks/sprint-actual.md](tasks/sprint-actual.md) | Tareas en curso y hechas |
 | [tasks/backlog.md](tasks/backlog.md) | Tareas candidatas por fase |

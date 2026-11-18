@@ -2,46 +2,32 @@
 
 ## Qué es
 
-Plantilla (repositorio template de GitHub) para crear el backend de cada app personal: una API en FastAPI con autenticación, base de datos, migraciones, Docker y tests ya resueltos. Cada app nueva parte de una copia de este repositorio y le agrega solo su dominio.
+Backend de Ahorra, la app móvil de finanzas personales en Flutter. Es una API en FastAPI creada desde la plantilla [fastapi-starter-kit](https://github.com/Jeyker-Dev/fastapi-starter-kit), que ya trae autenticación, base de datos, migraciones, Docker y tests. Este repositorio le agrega el dominio de Ahorra.
 
-El primer consumidor es la API de Ahorra (finanzas personales); las siguientes apps se crean igual.
+La visión del producto (problema, usuario y módulos) vive en el repositorio de la app, en `finance/docs/00-vision.md`. Este documento cubre solo lo que le toca a la API.
 
-## Problema
+## Responsabilidades de la API
 
-- Cada app personal tiene su propia API y todas necesitan lo mismo antes de la primera regla de negocio: login, tokens, usuarios, conexión a la base, migraciones, configuración y despliegue con Docker.
-- Rehacer la autenticación en cada proyecto es lento y es justo el código donde un error cuesta más.
-- Sin una base común, cada API termina con una estructura, unas herramientas y unas convenciones distintas.
+- Guardar los datos de la app y servirlos para que la app los sincronice. La app es offline-first: escribe primero en su base local y después los envía a la API.
+- Consultar las tasas de cambio (BCV y USDT/Bs) varias veces al día y guardar su historial, para que la app tenga siempre la última tasa conocida.
+- Aplicar las reglas que no pueden depender del dispositivo, como el historial de precios por producto o las ocurrencias de los ingresos recurrentes.
 
-## Usuario objetivo
+## Alcance de la v1
 
-Uso personal: un desarrollador que crea varias apps (móviles con Flutter, o web) y despliega sus APIs con Docker en su propio VPS. Cada app tiene un solo usuario o muy pocos, creados a mano desde el servidor.
-
-## Alcance de la plantilla
-
-- **Autenticación**: login con email y contraseña (flujo OAuth2 password), access token JWT de vida corta, refresh token rotativo con detección de reúso y logout.
-- **Usuarios**: alta desde la línea de comandos, sin registro público; endpoint para consultar el usuario actual.
-- **Salud**: endpoint que confirma que la API y la base responden.
-- **Infraestructura**: PostgreSQL, SQLAlchemy 2.0 async, Alembic, configuración por variables de entorno, `Dockerfile` y `docker-compose.yml`.
-- **Calidad**: uv, ruff, mypy estricto y pytest con tests unitarios y de integración.
-- **Guía de uso**: cómo crear una API nueva a partir de la plantilla.
+- **Tasas de cambio**: consulta periódica de BCV y USDT/Bs, historial y endpoint con la última tasa.
+- **Ingresos recurrentes**: reglas de repetición y ocurrencias esperadas o recibidas.
+- **Gastos por categoría**: cada gasto con su moneda y la tasa vigente al registrarlo.
+- **Productos y lista de compras**: catálogo propio, último precio, historial de precios y recomendación de compras.
+- **Metas**: monto objetivo en dólares y su avance.
 
 ## Fuera de alcance
 
-- Registro público, verificación de email y recuperación de contraseña.
-- Login social (Google, Apple) y OAuth2 con proveedores externos.
-- Roles y permisos: todo usuario autenticado puede todo.
-- Multi-tenant.
-- Reglas de negocio de cualquier app concreta.
-- Un frontend o un template de Flutter (se extrae más adelante desde Ahorra).
+- Todo lo que la visión de la app deja fuera de alcance: operar en Binance, conectar bancos, scraping de HTML, multiusuario e iOS.
+- La v2 de la app (escaneo de facturas, precios de supermercados y saldos de Binance) hasta cerrar la v1.
+- Registro público: los usuarios se crean con `scripts/create_user.py`.
 
 ## Objetivos
 
-- Crear la API de una app nueva y tener login funcionando en minutos, sin escribir código de autenticación.
-- Que toda API creada desde la plantilla pase `ruff`, `mypy --strict` y `pytest` desde el primer commit.
-- Que el mismo `docker compose up` sirva en local y en el VPS.
-
-## Visión a largo plazo
-
-- Workflow de CI (GitHub Actions) incluido en la plantilla.
-- Límite de intentos de login por IP y por email.
-- Si las copias crecen, mover el núcleo de la autenticación a un paquete de Python compartido para corregir un fallo una sola vez.
+- Que la app pueda trabajar sin conexión y sincronizar sin perder ni duplicar datos.
+- Que todo monto se guarde como `Decimal` con su moneda, y que cada conversión guarde la tasa que usó.
+- Que `ruff`, `mypy --strict` y `pytest` sigan en verde en cada commit.

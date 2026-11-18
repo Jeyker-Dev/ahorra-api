@@ -1,6 +1,6 @@
-# FastAPI Starter Kit
+# Ahorra API
 
-Production-ready FastAPI backend template for personal APIs with PostgreSQL 17, async SQLAlchemy 2.0, Alembic migrations, JWT authentication with rotating refresh tokens, Docker Compose, and strict quality tooling.
+Backend for Ahorra, a personal finance mobile app built with Flutter. Created from the [fastapi-starter-kit](https://github.com/Jeyker-Dev/fastapi-starter-kit) template, with PostgreSQL 17, async SQLAlchemy 2.0, Alembic migrations, JWT authentication with rotating refresh tokens, Docker Compose, and strict quality tooling.
 
 ## What's Included
 
@@ -13,21 +13,16 @@ Production-ready FastAPI backend template for personal APIs with PostgreSQL 17, 
   - `GET /users/me` — returns the authenticated user profile (`Bearer` token).
 - **Token flow**: short-lived `HS256` access JWTs (`15` minutes by default) paired with opaque refresh tokens (`30` days by default) stored only as SHA-256 hashes, rotated per use with family-wide revocation on reuse. Users are created via CLI rather than public signup. See [docs/areas/auth.md](docs/areas/auth.md) for the full auth specification and rules.
 
-## Creating a New API
+## Setup
 
-1. Click **Use this template** on GitHub to create a new repository, then clone it locally.
-2. Rename project metadata as needed:
-   - Update `name`, `description`, and `authors` in `pyproject.toml`.
-   - Update the FastAPI `title` in `src/app/main.py`.
-   - Keep the `src/app/` package name or update imports, `Dockerfile`, `docker-compose.yml`, and `migrations/env.py` if you rename the package.
-3. Create `.env` from `.env.example` and generate a 32+ character `JWT_SECRET`:
+Create `.env` from `.env.example` and generate a 32+ character `JWT_SECRET`:
 
-   ```bash
-   cp .env.example .env
-   openssl rand -hex 32
-   ```
+```bash
+cp .env.example .env
+openssl rand -hex 32
+```
 
-   Paste the generated output as the value of `JWT_SECRET=` in `.env`. Before deploying to a server, replace the default `POSTGRES_PASSWORD` and `DATABASE_URL` credentials as well.
+Paste the generated output as the value of `JWT_SECRET=` in `.env`. Before deploying to a server, replace the default `POSTGRES_PASSWORD` and `DATABASE_URL` credentials as well.
 
 ## Running with Docker Compose
 

@@ -20,7 +20,8 @@ docker compose exec api python scripts/create_user.py --email <email>
 
 ## Project rules
 
-- This repository is a template: never add business rules of a specific app.
+- This is the Ahorra API, created from the fastapi-starter-kit template. Fix shared auth or infrastructure bugs in the template first, then bring the fix here.
+- Every money amount is stored with its currency, and every conversion stores the exchange rate it used.
 - Never use `float` for money; use `Decimal` and `NUMERIC`.
 - Never call `datetime.now()` in domain or services; use the injected `Clock`.
 - Never call `Base.metadata.create_all()` outside tests; every schema change is an Alembic migration.
