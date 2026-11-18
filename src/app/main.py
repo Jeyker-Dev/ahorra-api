@@ -52,7 +52,7 @@ def create_app(
         finally:
             await engine.dispose()
 
-    application = FastAPI(title="FastAPI Starter Kit", lifespan=lifespan)
+    application = FastAPI(title="Ahorra API", lifespan=lifespan)
     application.add_exception_handler(InvalidCredentials, _handle_invalid_credentials)
     application.add_exception_handler(InvalidRefreshToken, _handle_invalid_refresh_token)
     application.add_exception_handler(RefreshTokenReused, _handle_invalid_refresh_token)

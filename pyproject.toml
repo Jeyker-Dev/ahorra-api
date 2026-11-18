@@ -1,7 +1,7 @@
 [project]
 name = "app"
 version = "0.1.0"
-description = "Add your description here"
+description = "Ahorra API: personal savings and budgeting backend"
 readme = "README.md"
 authors = [
     { name = "Jeyker-Dev", email = "mendozajeyker1178@gmail.com" }
