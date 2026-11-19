@@ -1,6 +1,6 @@
 # Autenticación y usuarios
 
-Decisión de base: [ADR-002](../decisions/ADR-002-jwt-refresh-token-rotation.md).
+Decisión de base: ADR-004.
 
 ## Endpoints
 

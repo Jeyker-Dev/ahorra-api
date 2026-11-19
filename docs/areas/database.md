@@ -1,6 +1,6 @@
 # Base de datos
 
-Decisión de base: [ADR-001](../decisions/ADR-001-postgresql-sqlalchemy-async.md).
+Decisión de base: ADR-003.
 
 ## Tablas de dominio
 

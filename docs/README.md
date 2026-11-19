@@ -10,7 +10,7 @@
 | [areas/auth.md](areas/auth.md) | Endpoints, reglas y errores de autenticación y usuarios |
 | [areas/database.md](areas/database.md) | Tablas, reglas de migraciones y riesgos |
 | [areas/infrastructure.md](areas/infrastructure.md) | Variables de entorno, Docker, salud y comandos de calidad |
-| [decisions/](decisions/) | ADRs, numerados en orden |
+| Decisiones (FunWork) | Los ADR viven en el módulo de Decisiones de FunWork, proyecto Ahorra; no en este repo |
 | [tasks/sprint-actual.md](tasks/sprint-actual.md) | Tareas en curso y hechas |
 | [tasks/backlog.md](tasks/backlog.md) | Tareas candidatas por fase |
 | [changelog.md](changelog.md) | Qué se hizo y cuándo |

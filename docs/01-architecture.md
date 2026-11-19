@@ -4,15 +4,15 @@
 
 - Python 3.13, gestionado con uv (`uv python pin 3.13`).
 - FastAPI y Uvicorn.
-- PostgreSQL 17, con SQLAlchemy 2.0 async (driver asyncpg) y Alembic para las migraciones. Ver [ADR-001](decisions/ADR-001-postgresql-sqlalchemy-async.md).
-- Autenticación: PyJWT (access token) y pwdlib con Argon2 (contraseñas). Ver [ADR-002](decisions/ADR-002-jwt-refresh-token-rotation.md).
+- PostgreSQL 17, con SQLAlchemy 2.0 async (driver asyncpg) y Alembic para las migraciones. Ver ADR-003.
+- Autenticación: PyJWT (access token) y pwdlib con Argon2 (contraseñas). Ver ADR-004.
 - Configuración: pydantic-settings, leída de variables de entorno.
 - Calidad: ruff, mypy `--strict` y pytest (con pytest-asyncio y httpx para los tests de la API).
 - Docker: `Dockerfile` multi-stage con uv y `docker-compose.yml` con los servicios `api` y `db`.
 
 ## Capas y responsabilidades
 
-Código organizado por dominio y no por rol técnico. Ver [ADR-003](decisions/ADR-003-domain-folders-and-layers.md).
+Código organizado por dominio y no por rol técnico. Ver ADR-005.
 
 ```
 pyproject.toml
@@ -88,7 +88,11 @@ El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md).
 
 ## Decisiones
 
-- [ADR-001](decisions/ADR-001-postgresql-sqlalchemy-async.md): PostgreSQL con SQLAlchemy 2.0 async y Alembic.
-- [ADR-002](decisions/ADR-002-jwt-refresh-token-rotation.md): JWT de vida corta y refresh token rotativo con detección de reúso.
-- [ADR-003](decisions/ADR-003-domain-folders-and-layers.md): carpetas por dominio y capas con puertos.
-- [ADR-004](decisions/ADR-004-template-copied-per-app.md): plantilla que se copia por app en lugar de una API compartida.
+Los ADR viven en el módulo de Decisiones de FunWork, proyecto Ahorra.
+
+- ADR-001: fuentes de la tasa BCV.
+- ADR-002: fuente de la tasa USDT/Bs.
+- ADR-003: PostgreSQL con SQLAlchemy 2.0 async y Alembic.
+- ADR-004: JWT de vida corta y refresh token rotativo con detección de reúso.
+- ADR-005: carpetas por dominio y capas con puertos.
+- ADR-006: plantilla que se copia por app en lugar de una API compartida.
