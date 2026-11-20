@@ -35,6 +35,10 @@ docker compose exec api python scripts/create_user.py --email <email>
 `docs/00-vision.md`, `docs/01-architecture.md`, and the affected
 `docs/areas/*.md`. After finishing, follow the `project-docs` skill.
 
+Tasks and ADRs live in FunWork (project Ahorra, id 2), not in this repo.
+Create the task in FunWork and set it to `Doing` before starting work;
+set it to `Done` with the commit when finished.
+
 ## Skills
 
 General conventions come from installed skills (`clean-code`,

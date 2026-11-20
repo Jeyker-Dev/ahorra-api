@@ -36,5 +36,5 @@ Decisión de base: ADR-003.
 
 ## Riesgos conocidos
 
-- `refresh_tokens` crece con cada rotación y no hay limpieza automática todavía (está en el backlog).
+- `refresh_tokens` crece con cada rotación y no hay limpieza automática todavía (pendiente para más adelante, ver el roadmap).
 - Cambiar `JWT_SECRET` invalida todas las sesiones de access token, pero no los refresh tokens.
