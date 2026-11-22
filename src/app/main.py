@@ -11,6 +11,15 @@ from app.clock import Clock, SystemClock
 from app.config import Settings, get_settings
 from app.db import create_engine, create_session_factory
 from app.health.api import router as health_router
+from app.rates.api import router as rates_router
+from app.rates.domain import RateSources
+from app.rates.sources import (
+    BcvHtmlSource,
+    BinanceP2PSource,
+    DolarApiSource,
+    build_bcv_http_client,
+    build_default_http_client,
+)
 from app.users.api import router as users_router
 
 
@@ -38,18 +47,28 @@ def create_app(
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         resolved_settings = settings or get_settings()
+        resolved_clock = clock or SystemClock()
         engine = create_engine(resolved_settings.database_url)
         session_factory = create_session_factory(engine)
+        bcv_client = build_bcv_http_client()
+        default_client = build_default_http_client()
 
         application.state.settings = resolved_settings
-        application.state.clock = clock or SystemClock()
+        application.state.clock = resolved_clock
         application.state.password_hasher = PasswordHasher()
         application.state.engine = engine
         application.state.session_factory = session_factory
+        application.state.rate_sources = RateSources(
+            bcv_html=BcvHtmlSource(bcv_client),
+            dolarapi=DolarApiSource(default_client),
+            binance=BinanceP2PSource(default_client, resolved_clock),
+        )
 
         try:
             yield
         finally:
+            await bcv_client.aclose()
+            await default_client.aclose()
             await engine.dispose()
 
     application = FastAPI(title="Ahorra API", lifespan=lifespan)
@@ -59,6 +78,7 @@ def create_app(
     application.include_router(health_router)
     application.include_router(auth_router)
     application.include_router(users_router)
+    application.include_router(rates_router)
     return application
 
 

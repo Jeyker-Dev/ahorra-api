@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,7 @@ def _clear_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "JWT_SECRET",
         "ACCESS_TOKEN_TTL_MINUTES",
         "REFRESH_TOKEN_TTL_DAYS",
+        "BCV_TOLERANCE_PERCENT",
     ):
         monkeypatch.delenv(var, raising=False)
 
@@ -32,6 +34,7 @@ def test_settings_loads_with_required_env_and_defaults(
     assert settings.jwt_secret.get_secret_value() == VALID_JWT_SECRET
     assert settings.access_token_ttl_minutes == 15
     assert settings.refresh_token_ttl_days == 30
+    assert settings.bcv_tolerance_percent == Decimal("0.5")
 
 
 def test_settings_overrides_optional_ttls(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -40,11 +43,13 @@ def test_settings_overrides_optional_ttls(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("JWT_SECRET", VALID_JWT_SECRET)
     monkeypatch.setenv("ACCESS_TOKEN_TTL_MINUTES", "10")
     monkeypatch.setenv("REFRESH_TOKEN_TTL_DAYS", "7")
+    monkeypatch.setenv("BCV_TOLERANCE_PERCENT", "1.25")
 
     settings = Settings(_env_file=None)
 
     assert settings.access_token_ttl_minutes == 10
     assert settings.refresh_token_ttl_days == 7
+    assert settings.bcv_tolerance_percent == Decimal("1.25")
 
 
 def test_settings_fails_when_database_url_is_missing(
@@ -142,5 +147,6 @@ def test_env_example_lists_all_documented_variables() -> None:
         "POSTGRES_USER",
         "POSTGRES_PASSWORD",
         "POSTGRES_DB",
+        "BCV_TOLERANCE_PERCENT",
     }
     assert expected_keys.issubset(keys)

@@ -12,7 +12,7 @@ Proyecto creado desde `fastapi-starter-kit`: autenticación, usuarios, `/health`
 
 ## Fase 1 — Tasas de cambio
 
-Consulta periódica de BCV y USDT/Bs, historial de tasas y endpoint con la última tasa conocida.
+Consulta periódica de BCV y USDT/Bs, historial de tasas y endpoint con la última tasa conocida. Hecha.
 
 ## Fase 2 — Ingresos recurrentes
 

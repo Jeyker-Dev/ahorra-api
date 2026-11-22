@@ -27,6 +27,18 @@ Decisión de base: ADR-003.
 | `revoked_at` | `TIMESTAMPTZ` | `NULL` mientras está activo |
 | `created_at` | `TIMESTAMPTZ` | UTC |
 
+### `exchange_rates`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por la aplicación |
+| `kind` | `VARCHAR(16)` | `CHECK (kind IN ('bcv', 'usdt'))` |
+| `value` | `NUMERIC(18, 8)` | Bolívares por 1 USD/USDT |
+| `value_date` | `DATE` | Índice único parcial en `(value_date)` donde `kind = 'bcv'` |
+| `origin` | `VARCHAR(32)` | `CHECK (origin IN ('bcv_html', 'dolarapi', 'binance_p2p', 'manual'))` |
+| `status` | `VARCHAR(16)` | `CHECK (status IN ('confirmed', 'in_review'))` |
+| `fetched_at` | `TIMESTAMPTZ` | UTC; índice compuesto `(kind, fetched_at DESC)` |
+
 ## Reglas
 
 - Una migración de Alembic por cambio de esquema, con un mensaje descriptivo (`alembic revision --autogenerate -m "create users"`), revisada a mano antes de aplicarla.

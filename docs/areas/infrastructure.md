@@ -10,15 +10,17 @@ Variables de entorno leídas con pydantic-settings en `src/app/config.py`. `.env
 | `JWT_SECRET` | (`openssl rand -hex 32`) | Obligatoria, al menos 32 caracteres; si no, la API no arranca |
 | `ACCESS_TOKEN_TTL_MINUTES` | `15` | Opcional |
 | `REFRESH_TOKEN_TTL_DAYS` | `30` | Opcional |
+| `BCV_TOLERANCE_PERCENT` | `0.5` | Opcional; tolerancia porcentual entre BCV HTML y dolarapi |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `app` | Solo para el servicio `db` de compose |
 
 ## Docker
 
-- `Dockerfile` multi-stage: una etapa instala las dependencias con uv a partir de `uv.lock` (sin las de desarrollo) y la final copia el entorno y el código, agrega el entorno virtual al `PATH` y corre como usuario no root.
-- Dentro del contenedor los comandos se corren directo (`alembic`, `uvicorn`, `python`), sin `uv run`, para que uv no intente sincronizar las dependencias de desarrollo al arrancar.
+- `Dockerfile` multi-stage: la etapa `builder` instala las dependencias con uv a partir de `uv.lock` (sin las de desarrollo) y descarga y verifica por SHA-256 el binario de `supercronic` (`v0.2.51`). La etapa `runtime` instala `tzdata` para el soporte de `America/Caracas`, copia el entorno virtual, el código, `docker/` y `supercronic`, agrega el entorno virtual al `PATH` y corre como usuario no root (`app`).
+- Dentro del contenedor los comandos se corren directo (`alembic`, `uvicorn`, `python`, `supercronic`), sin `uv run`, para que uv no intente sincronizar las dependencias de desarrollo al arrancar.
 - `docker-compose.yml`:
   - `db`: PostgreSQL 17 con volumen persistente y `healthcheck` (`pg_isready`).
-  - `api`: depende de `db` en estado `healthy`, corre `alembic upgrade head` y después Uvicorn en el puerto 8000, y lee `.env`.
+  - `api`: depende de `db` en estado `healthy`, corre `alembic upgrade head` y después Uvicorn en el puerto 8000, expone `healthcheck` sobre `GET /health` con `urllib` y lee `.env`.
+  - `scheduler`: reutiliza la misma imagen de `api`, corre `supercronic /app/docker/scheduler/crontab` como usuario no root con `TZ=America/Caracas`, depende de `db` y `api` en estado `healthy` (garantizando que las migraciones ya corrieron), lee `.env` y usa `restart: unless-stopped`.
 - El mismo compose sirve en local y en el VPS; en el VPS solo cambia el `.env`.
 
 ## Salud

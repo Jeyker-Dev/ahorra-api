@@ -1,0 +1,2 @@
+0 9,13,17,21 * * * python scripts/fetch_rates.py --kind bcv
+0 * * * * python scripts/fetch_rates.py --kind usdt

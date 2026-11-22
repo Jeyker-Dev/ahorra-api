@@ -8,7 +8,8 @@
 - Autenticación: PyJWT (access token) y pwdlib con Argon2 (contraseñas). Ver ADR-004.
 - Configuración: pydantic-settings, leída de variables de entorno.
 - Calidad: ruff, mypy `--strict` y pytest (con pytest-asyncio y httpx para los tests de la API).
-- Docker: `Dockerfile` multi-stage con uv y `docker-compose.yml` con los servicios `api` y `db`.
+- HTTP y parsing: httpx, BeautifulSoup (`beautifulsoup4`) y `certifi` / `tzdata`.
+- Docker: `Dockerfile` multi-stage con uv y `supercronic`, y `docker-compose.yml` con los servicios `api`, `scheduler` y `db`.
 
 ## Capas y responsabilidades
 
@@ -44,10 +45,27 @@ src/app/
 │   ├── dependencies.py      get_current_user para proteger endpoints
 │   ├── schemas.py           Esquemas Pydantic de entrada y salida HTTP
 │   └── api.py               Router: /auth/token, /auth/refresh, /auth/logout
+├── rates/
+│   ├── certs/               Certificado intermedio Sectigo OV R36 para bcv.org.ve
+│   ├── domain.py            ExchangeRate, Quote, enums, puertos y utilidades de zona horaria
+│   ├── errors.py            RateUnavailable, QuoteUnavailable, RateNotFound, RateNotInReview, InvalidRateValue
+│   ├── models.py            ExchangeRateModel (SQLAlchemy)
+│   ├── repository.py        SqlAlchemyExchangeRateRepository
+│   ├── sources.py           BcvHtmlSource, DolarApiSource y BinanceP2PSource (httpx)
+│   ├── service.py           Casos de uso: consulta, validación cruzada, carga manual y revisión
+│   ├── cli.py               Wiring y helpers compartidos de los scripts CLI
+│   ├── schemas.py           Esquemas Pydantic HTTP (RateOut, LatestRatesOut, RateHistoryQuery)
+│   └── api.py               Router: GET /rates/latest y GET /rates
 └── health/
     └── api.py               Router: GET /health
 scripts/
-└── create_user.py           Alta de usuario por línea de comandos
+├── create_user.py           Alta de usuario por línea de comandos
+├── fetch_rates.py           Consulta y guarda tasas BCV o USDT (--kind bcv|usdt)
+├── set_rate.py              Carga manual de una tasa confirmada
+└── review_rates.py          Lista, confirma o corrige tasas en revisión
+docker/
+└── scheduler/
+    └── crontab              Horarios de consulta en America/Caracas (supercronic)
 tests/
 ├── unit/app/                Espeja src/app/; sin base de datos ni red
 └── integration/             API completa contra PostgreSQL real
@@ -83,8 +101,10 @@ Reglas entre capas:
 | POST | `/auth/refresh` | No (usa el refresh token) | Rota el refresh token y devuelve un par nuevo |
 | POST | `/auth/logout` | No (usa el refresh token) | Revoca la sesión del refresh token |
 | GET | `/users/me` | Bearer | Devuelve el usuario autenticado |
+| GET | `/rates/latest` | Bearer | Devuelve la tasa BCV vigente hoy (`value_date <= hoy` en `America/Caracas`; las tasas con fecha futura se guardan pero no se devuelven hasta su fecha) y la última USDT |
+| GET | `/rates` | Bearer | Historial de tasas filtrado por `kind` y rango de `value_date` |
 
-El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md).
+El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md) y [areas/rates.md](areas/rates.md).
 
 ## Decisiones
 

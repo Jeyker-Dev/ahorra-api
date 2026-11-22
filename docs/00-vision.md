@@ -22,7 +22,8 @@ La visión del producto (problema, usuario y módulos) vive en el repositorio de
 
 ## Fuera de alcance
 
-- Todo lo que la visión de la app deja fuera de alcance: operar en Binance, conectar bancos, scraping de HTML, multiusuario e iOS.
+- Todo lo que la visión de la app deja fuera de alcance: operar en Binance, conectar bancos, scraping de HTML de precios de tiendas, multiusuario e iOS.
+- La lectura HTML de la tasa oficial del BCV es la única excepción, porque el BCV no ofrece una API pública (FunWork ADR-001).
 - La v2 de la app (escaneo de facturas, precios de supermercados y saldos de Binance) hasta cerrar la v1.
 - Registro público: los usuarios se crean con `scripts/create_user.py`.
 
