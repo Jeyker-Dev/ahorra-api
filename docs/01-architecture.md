@@ -64,6 +64,14 @@ src/app/
 │   ├── service.py           Casos de uso: upsert, cierre, generación de horizonte, cobro y reverso
 │   ├── schemas.py           Esquemas Pydantic HTTP de reglas y ocurrencias
 │   └── api.py               Router: /income/rules y /income/occurrences
+├── expenses/
+│   ├── domain.py            ExpenseCategory, Expense, puertos y tipos de resumen
+│   ├── errors.py            Errores de negocio de categorías, gastos y tasa faltante
+│   ├── models.py            ExpenseCategoryModel y ExpenseModel (SQLAlchemy)
+│   ├── repository.py        Repositorios PostgreSQL (SqlAlchemyExpenseCategoryRepository, SqlAlchemyExpenseRepository)
+│   ├── service.py           Casos de uso: categorías, upsert/borrado lógico de gastos y resumen
+│   ├── schemas.py           Esquemas Pydantic HTTP de categorías, gastos y resumen
+│   └── api.py               Router: /expenses/categories, /expenses/summary y /expenses
 └── health/
     └── api.py               Router: GET /health
 scripts/
@@ -89,13 +97,13 @@ Reglas entre capas:
 2. `service.py` depende de los puertos de `domain.py` (protocolos), nunca de una implementación concreta. Los colaboradores se inyectan por `__init__`.
 3. `repository.py` y `models.py` implementan los puertos con SQLAlchemy. Los modelos no salen de esa capa: el repositorio devuelve dataclasses de dominio.
 4. El borde HTTP (`api.py` más los manejadores registrados en `main.py` junto con `schemas.py`) traduce Pydantic a dominio, llama al servicio y convierte los errores de negocio en respuestas HTTP.
-5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users` e `income` consulta `RatesService.bcv_in_force` a través del protocolo `BcvRateLookup` y `Depends(get_rates_service)`), nunca sus modelos ni su repositorio.
+5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users`, `income` consulta `RatesService.bcv_in_force` a través del protocolo `BcvRateLookup` y `expenses` consulta `RatesService.bcv_in_force` y `RatesService.usdt_in_force` a través de su protocolo `RateLookup` y `Depends(get_rates_service)`), nunca sus modelos ni su repositorio.
 
 ## Convenciones críticas
 
 - Los montos de dinero, cuando una app los agregue, se guardan como `NUMERIC` y se manejan con `Decimal`. Nunca `float`.
 - Toda fecha y hora se guarda en UTC (`TIMESTAMP WITH TIME ZONE`) y se obtiene del `Clock` inyectado, nunca de `datetime.now()` directo en el dominio o los servicios.
-- Los ids son UUID generados por la aplicación, salvo las entidades que la app móvil crea offline (`income_rules` por ahora), cuyo UUID viene del cliente.
+- Los ids son UUID generados por la aplicación, salvo las entidades que la app móvil crea offline (`income_rules`, `expense_categories` y `expenses`), cuyo UUID viene del cliente.
 - Cada cambio de esquema es una migración de Alembic versionada; nunca `create_all()` fuera de los tests.
 - Los errores de negocio heredan de `BusinessRuleError`, uno por regla. Solo el borde HTTP (`api.py` y los manejadores en `main.py`) los convierte en códigos de estado.
 - Los secretos solo vienen del entorno. `.env.example` lista todas las variables con valores vacíos y `.env` nunca se versiona.
@@ -119,8 +127,17 @@ Reglas entre capas:
 | GET | `/income/occurrences` | Bearer | Lista ocurrencias filtradas por rango inclusivo de `expected_date` y `status` opcional |
 | POST | `/income/occurrences/{occurrence_id}/receive` | Bearer | Marca o corrige una ocurrencia como recibida asociando la tasa BCV vigente |
 | POST | `/income/occurrences/{occurrence_id}/unreceive` | Bearer | Revierte una ocurrencia recibida a `expected` |
+| PUT | `/expenses/categories/{category_id}` | Bearer | Crea (201) o renombra idempotentemente (200) una categoría de gasto |
+| GET | `/expenses/categories` | Bearer | Lista categorías (`include_archived=false` por defecto; activas primero) |
+| POST | `/expenses/categories/{category_id}/archive` | Bearer | Archiva una categoría de gasto de forma idempotente |
+| POST | `/expenses/categories/{category_id}/unarchive` | Bearer | Desarchiva una categoría de gasto de forma idempotente |
+| GET | `/expenses/summary` | Bearer | Resumen por categoría en USD para un rango inclusivo de `spent_on` |
+| PUT | `/expenses/{expense_id}` | Bearer | Crea (201) o actualiza idempotentemente (200) un gasto guardando tasas BCV y USDT |
+| GET | `/expenses/{expense_id}` | Bearer | Devuelve un gasto no eliminado por id (`404` si falta o fue eliminado) |
+| DELETE | `/expenses/{expense_id}` | Bearer | Borrado lógico idempotente (`deleted_at`) de un gasto |
+| GET | `/expenses` | Bearer | Lista gastos no eliminados filtrados por rango inclusivo de `spent_on` y `category_id` opcional |
 
-El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md) y [areas/income.md](areas/income.md).
+El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md), [areas/income.md](areas/income.md) y [areas/expenses.md](areas/expenses.md).
 
 ## Decisiones
 

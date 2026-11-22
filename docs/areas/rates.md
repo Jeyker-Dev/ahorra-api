@@ -36,7 +36,8 @@ Todos los valores se cuantizan a 8 decimales (`ROUND_HALF_EVEN`) en el servicio 
 - `set_manual(kind, value, value_date)`: exige `value > 0` (`InvalidRateValue`) y guarda origen `manual` y estado `confirmed` (reemplazando en el lugar la fila BCV existente para esa fecha, si hay una).
 - `confirm(rate_id)`: solo válido si la tasa existe (`RateNotFound`) y está `in_review` (`RateNotInReview`); pasa su estado a `confirmed`.
 - `correct(rate_id, value)`: exige `value > 0` (`InvalidRateValue`), tasa existente y estado `in_review`; actualiza `value`, cambia origen a `manual` y estado a `confirmed`.
-- `bcv_in_force(on)`: devuelve la tasa BCV más reciente con `value_date <= on`, sin importar su `status` (`None` si no existe ninguna). Es el punto de consulta usado por otros dominios (como `income` al registrar un cobro).
+- `bcv_in_force(on)`: devuelve la tasa BCV más reciente con `value_date <= on`, sin importar su `status` (`None` si no existe ninguna). Es el punto de consulta usado por otros dominios (como `income` al registrar un cobro y `expenses` al registrar un gasto).
+- `usdt_in_force(on)`: devuelve la tasa USDT más reciente con `value_date <= on` (ordenada por `value_date DESC, fetched_at DESC`), sin importar su `status` (`None` si no existe ninguna). Usada por `expenses` para fijar ambas lecturas históricas en bolívares.
 
 ## Endpoints HTTP (`Authorization: Bearer <access_token>`)
 

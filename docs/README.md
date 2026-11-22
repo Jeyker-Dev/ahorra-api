@@ -10,6 +10,7 @@
 | [areas/auth.md](areas/auth.md) | Endpoints, reglas y errores de autenticación y usuarios |
 | [areas/rates.md](areas/rates.md) | Fuentes de tasas BCV/USDT, validación cruzada, CLI y scheduler |
 | [areas/income.md](areas/income.md) | Reglas de ingresos recurrentes, ocurrencias, horizonte, cobros y endpoints |
+| [areas/expenses.md](areas/expenses.md) | Reglas de categorías, gastos, tasas históricas, borrado lógico, resumen y endpoints |
 | [areas/database.md](areas/database.md) | Tablas, reglas de migraciones y riesgos |
 | [areas/infrastructure.md](areas/infrastructure.md) | Variables de entorno, Docker, salud y comandos de calidad |
 | Decisiones (FunWork) | Los ADR viven en el módulo de Decisiones de FunWork, proyecto Ahorra; no en este repo |

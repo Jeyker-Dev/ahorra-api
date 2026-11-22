@@ -10,6 +10,21 @@ from app.auth.passwords import PasswordHasher
 from app.clock import Clock, SystemClock
 from app.config import Settings, get_settings
 from app.db import create_engine, create_session_factory
+from app.expenses.api import router as expenses_router
+from app.expenses.errors import (
+    CategoryArchived,
+    CategoryNameTaken,
+    CategoryNotFound,
+    ExpenseDeleted,
+    ExpenseNotFound,
+    InvalidCategoryName,
+    InvalidExpenseAmount,
+    InvalidExpenseNote,
+    InvalidExpensePeriod,
+)
+from app.expenses.errors import (
+    RateNotAvailableForDate as ExpenseRateNotAvailableForDate,
+)
 from app.health.api import router as health_router
 from app.income.api import router as income_router
 from app.income.errors import (
@@ -21,7 +36,9 @@ from app.income.errors import (
     InvalidIncomePeriod,
     OccurrenceNotFound,
     OccurrenceNotReceived,
-    RateNotAvailableForDate,
+)
+from app.income.errors import (
+    RateNotAvailableForDate as IncomeRateNotAvailableForDate,
 )
 from app.rates.api import router as rates_router
 from app.rates.domain import RateSources
@@ -65,11 +82,28 @@ def _register_income_error_handlers(application: FastAPI) -> None:
         (OccurrenceNotFound, status.HTTP_404_NOT_FOUND),
         (IncomeRuleEnded, status.HTTP_409_CONFLICT),
         (OccurrenceNotReceived, status.HTTP_409_CONFLICT),
-        (RateNotAvailableForDate, status.HTTP_409_CONFLICT),
+        (IncomeRateNotAvailableForDate, status.HTTP_409_CONFLICT),
         (InvalidIncomeName, status.HTTP_422_UNPROCESSABLE_CONTENT),
         (InvalidIncomeAmount, status.HTTP_422_UNPROCESSABLE_CONTENT),
         (InvalidIncomeDays, status.HTTP_422_UNPROCESSABLE_CONTENT),
         (InvalidIncomePeriod, status.HTTP_422_UNPROCESSABLE_CONTENT),
+    )
+    for exc_type, status_code in mappings:
+        application.add_exception_handler(exc_type, _make_detail_handler(status_code))
+
+
+def _register_expense_error_handlers(application: FastAPI) -> None:
+    mappings: tuple[tuple[type[Exception], int], ...] = (
+        (CategoryNotFound, status.HTTP_404_NOT_FOUND),
+        (ExpenseNotFound, status.HTTP_404_NOT_FOUND),
+        (CategoryNameTaken, status.HTTP_409_CONFLICT),
+        (CategoryArchived, status.HTTP_409_CONFLICT),
+        (ExpenseDeleted, status.HTTP_409_CONFLICT),
+        (ExpenseRateNotAvailableForDate, status.HTTP_409_CONFLICT),
+        (InvalidCategoryName, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidExpenseAmount, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidExpenseNote, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidExpensePeriod, status.HTTP_422_UNPROCESSABLE_CONTENT),
     )
     for exc_type, status_code in mappings:
         application.add_exception_handler(exc_type, _make_detail_handler(status_code))
@@ -113,11 +147,13 @@ def create_app(
     application.add_exception_handler(InvalidRefreshToken, _handle_invalid_refresh_token)
     application.add_exception_handler(RefreshTokenReused, _handle_invalid_refresh_token)
     _register_income_error_handlers(application)
+    _register_expense_error_handlers(application)
     application.include_router(health_router)
     application.include_router(auth_router)
     application.include_router(users_router)
     application.include_router(rates_router)
     application.include_router(income_router)
+    application.include_router(expenses_router)
     return application
 
 

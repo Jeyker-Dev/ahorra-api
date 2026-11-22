@@ -68,6 +68,14 @@ class _InMemoryRateRepository:
             return None
         return max(matching, key=lambda r: (r.value_date, r.fetched_at))
 
+    async def latest_usdt_in_force(self, on: date) -> ExchangeRate | None:
+        matching = [
+            r for r in self.items.values() if r.kind == RateKind.usdt and r.value_date <= on
+        ]
+        if not matching:
+            return None
+        return max(matching, key=lambda r: (r.value_date, r.fetched_at))
+
     async def latest(self, kind: RateKind) -> ExchangeRate | None:
         matching = [r for r in self.items.values() if r.kind == kind]
         if not matching:
@@ -637,3 +645,59 @@ async def test_bcv_in_force_returns_most_recent_on_or_before_date_ignoring_statu
     assert await service.bcv_in_force(date(2026, 11, 20)) == target_in_review
     assert await service.bcv_in_force(date(2026, 11, 19)) == target_in_review
     assert await service.bcv_in_force(date(2026, 11, 17)) is None
+
+
+async def test_usdt_in_force_returns_most_recent_on_or_before_date_ignoring_status() -> None:
+    older = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("940.00000000"),
+        value_date=date(2026, 11, 18),
+        origin=RateOrigin.binance_p2p,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 18, 13, 0, tzinfo=UTC),
+    )
+    earlier_same_day = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("950.00000000"),
+        value_date=date(2026, 11, 19),
+        origin=RateOrigin.binance_p2p,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 19, 10, 0, tzinfo=UTC),
+    )
+    later_same_day_in_review = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("955.00000000"),
+        value_date=date(2026, 11, 19),
+        origin=RateOrigin.manual,
+        status=RateStatus.in_review,
+        fetched_at=datetime(2026, 11, 19, 15, 0, tzinfo=UTC),
+    )
+    future = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("970.00000000"),
+        value_date=date(2026, 11, 22),
+        origin=RateOrigin.binance_p2p,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 22, 12, 0, tzinfo=UTC),
+    )
+    bcv_same_day = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.bcv,
+        value=Decimal("917.00000000"),
+        value_date=date(2026, 11, 20),
+        origin=RateOrigin.bcv_html,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 20, 14, 0, tzinfo=UTC),
+    )
+    repo = _InMemoryRateRepository(
+        [older, earlier_same_day, later_same_day_in_review, future, bcv_same_day]
+    )
+    service = _make_service(repo)
+
+    assert await service.usdt_in_force(date(2026, 11, 20)) == later_same_day_in_review
+    assert await service.usdt_in_force(date(2026, 11, 19)) == later_same_day_in_review
+    assert await service.usdt_in_force(date(2026, 11, 17)) is None

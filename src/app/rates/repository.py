@@ -60,12 +60,12 @@ class SqlAlchemyExchangeRateRepository:
         model = result.scalar_one_or_none()
         return _to_domain(model) if model is not None else None
 
-    async def latest_bcv_in_force(self, today: date) -> ExchangeRate | None:
+    async def _latest_in_force(self, kind: RateKind, on: date) -> ExchangeRate | None:
         stmt = (
             select(ExchangeRateModel)
             .where(
-                ExchangeRateModel.kind == RateKind.bcv.value,
-                ExchangeRateModel.value_date <= today,
+                ExchangeRateModel.kind == kind.value,
+                ExchangeRateModel.value_date <= on,
             )
             .order_by(ExchangeRateModel.value_date.desc(), ExchangeRateModel.fetched_at.desc())
             .limit(1)
@@ -73,6 +73,12 @@ class SqlAlchemyExchangeRateRepository:
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return _to_domain(model) if model is not None else None
+
+    async def latest_bcv_in_force(self, today: date) -> ExchangeRate | None:
+        return await self._latest_in_force(RateKind.bcv, today)
+
+    async def latest_usdt_in_force(self, on: date) -> ExchangeRate | None:
+        return await self._latest_in_force(RateKind.usdt, on)
 
     async def latest(self, kind: RateKind) -> ExchangeRate | None:
         stmt = (

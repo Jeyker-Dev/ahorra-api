@@ -14,8 +14,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.auth.passwords import PasswordHasher
 from app.config import Settings
+from app.db import create_session_factory
 from app.main import create_app
 from app.rates.domain import ExchangeRate, RateKind, RateOrigin, RateStatus
+from app.rates.repository import SqlAlchemyExchangeRateRepository
 
 TEST_JWT_SECRET = "test-secret-key-with-at-least-32-chars"
 
@@ -436,3 +438,67 @@ async def test_get_latest_returns_null_bcv_when_only_future_bcv_exists(
     body = resp.json()
     assert body["bcv"] is None
     assert body["usdt"]["id"] == usdt_id
+
+
+async def test_usdt_in_force_through_repository_filters_and_orders(
+    migrated_db_url: str,
+) -> None:
+    earlier = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("945.00000000"),
+        value_date=date(2026, 11, 18),
+        origin=RateOrigin.binance_p2p,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 18, 22, 0, tzinfo=UTC),
+    )
+    same_day_older = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("950.00000000"),
+        value_date=date(2026, 11, 19),
+        origin=RateOrigin.binance_p2p,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 19, 10, 0, tzinfo=UTC),
+    )
+    same_day_newer_in_review = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("956.00000000"),
+        value_date=date(2026, 11, 19),
+        origin=RateOrigin.manual,
+        status=RateStatus.in_review,
+        fetched_at=datetime(2026, 11, 19, 18, 0, tzinfo=UTC),
+    )
+    future_usdt = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("975.00000000"),
+        value_date=date(2026, 11, 21),
+        origin=RateOrigin.binance_p2p,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 21, 12, 0, tzinfo=UTC),
+    )
+    bcv_rate = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.bcv,
+        value=Decimal("917.00000000"),
+        value_date=date(2026, 11, 20),
+        origin=RateOrigin.bcv_html,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 20, 12, 0, tzinfo=UTC),
+    )
+    for rate in (earlier, same_day_older, same_day_newer_in_review, future_usdt, bcv_rate):
+        await _insert_rate(migrated_db_url, rate)
+
+    engine = create_async_engine(migrated_db_url)
+    try:
+        session_factory = create_session_factory(engine)
+        async with session_factory() as session:
+            repo = SqlAlchemyExchangeRateRepository(session)
+            assert await repo.latest_usdt_in_force(date(2026, 11, 20)) == same_day_newer_in_review
+            assert await repo.latest_usdt_in_force(date(2026, 11, 19)) == same_day_newer_in_review
+            assert await repo.latest_usdt_in_force(date(2026, 11, 18)) == earlier
+            assert await repo.latest_usdt_in_force(date(2026, 11, 17)) is None
+    finally:
+        await engine.dispose()

@@ -20,7 +20,7 @@ Reglas de repetición, generación de ocurrencias y confirmación de cada ocurre
 
 ## Fase 3 — Gastos por categoría
 
-Categorías y gastos con su moneda y la tasa vigente al registrarlos.
+Categorías y gastos con su moneda y la tasa vigente al registrarlos. Hecha.
 
 ## Fase 4 — Productos y lista de compras
 

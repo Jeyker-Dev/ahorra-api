@@ -71,6 +71,34 @@ Decisión de base: ADR-003.
 | `received_at` | `TIMESTAMPTZ` | UTC; `NULL` si `expected`, obligatorio si `received` |
 | `updated_at` | `TIMESTAMPTZ` | UTC |
 
+### `expense_categories`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `name` | `VARCHAR(50)` | `CHECK (char_length(btrim(name)) BETWEEN 1 AND 50)`; índice único funcional `uq_expense_categories_lower_name` en `lower(name)` |
+| `archived_at` | `TIMESTAMPTZ` | `NULL` mientras está activa; UTC cuando se archiva |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
+### `expenses`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `category_id` | `UUID` | FK a `expense_categories.id`, `ON DELETE RESTRICT`; índice compuesto `(category_id, spent_on)` |
+| `amount` | `NUMERIC(18, 2)` | `CHECK (amount > 0)` |
+| `currency` | `VARCHAR(8)` | `CHECK (currency IN ('usd', 'ves'))` |
+| `spent_on` | `DATE` | Fecha del gasto; índice `ix_expenses_spent_on` |
+| `note` | `VARCHAR(500)` | Opcional; `CHECK (note IS NULL OR (char_length(btrim(note)) BETWEEN 1 AND 500))` |
+| `bcv_rate_value` | `NUMERIC(18, 8)` | `CHECK (bcv_rate_value > 0)` |
+| `bcv_rate_date` | `DATE` | `value_date` de la tasa BCV vigente en `spent_on` |
+| `usdt_rate_value` | `NUMERIC(18, 8)` | `CHECK (usdt_rate_value > 0)` |
+| `usdt_rate_date` | `DATE` | `value_date` de la tasa USDT vigente en `spent_on` |
+| `deleted_at` | `TIMESTAMPTZ` | `NULL` mientras está activo; UTC en borrado lógico |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
 ## Reglas
 
 - Una migración de Alembic por cambio de esquema, con un mensaje descriptivo (`alembic revision --autogenerate -m "create users"`), revisada a mano antes de aplicarla.

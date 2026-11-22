@@ -2,6 +2,7 @@
 
 ## 2026-11-22
 
+- **Fase 3 — Gastos por categoría**: método `RatesService.usdt_in_force`, dominio `expenses/`, tablas `expense_categories` (con índice único en `lower(name)`) y `expenses` (con tasas históricas BCV y USDT y borrado lógico `deleted_at`), servicio con upsert idempotente por `id` generado por el cliente, archivo/desarchivo de categorías, borrado lógico, resumen mensual/por rango en USD con `Decimal` y endpoints bajo `/expenses`.
 - **Fase 2 — Ingresos recurrentes**: dominio `income/`, tablas `income_rules` (con `days SMALLINT[]`, `ended_at` y `CHECK`s) e `income_occurrences` (con `CHECK` compuesto de cobro y unicidad `(rule_id, expected_date)`), servicio con upsert idempotente por `id` generado por el cliente, cierre con `ended_at`, extensión de horizonte configurable (`INCOME_HORIZON_MONTHS`), registro/corrección/reverso de cobros usando `RatesService.bcv_in_force`, endpoints `/income/rules` y `/income/occurrences`, script `scripts/generate_income_occurrences.py` y cron diario a las `00:30` en `America/Caracas`.
 
 ## 2026-11-20

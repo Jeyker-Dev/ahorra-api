@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from app.auth.models import RefreshTokenModel
 from app.config import get_settings
 from app.db import Base
+from app.expenses.models import ExpenseCategoryModel, ExpenseModel
 from app.income.models import IncomeOccurrenceModel, IncomeRuleModel
 from app.rates.models import ExchangeRateModel
 from app.users.models import UserModel
@@ -19,6 +20,8 @@ _MODELS = (
     ExchangeRateModel,
     IncomeRuleModel,
     IncomeOccurrenceModel,
+    ExpenseCategoryModel,
+    ExpenseModel,
 )
 
 config = context.config
