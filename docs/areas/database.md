@@ -99,6 +99,64 @@ Decisión de base: ADR-003.
 | `created_at` | `TIMESTAMPTZ` | UTC |
 | `updated_at` | `TIMESTAMPTZ` | UTC |
 
+### `products`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `name` | `VARCHAR(80)` | `CHECK (char_length(btrim(name)) BETWEEN 1 AND 80)`; índice único funcional `uq_products_lower_name` en `lower(name)` |
+| `unit` | `VARCHAR(8)` | `CHECK (unit IN ('unit', 'kg', 'l'))` |
+| `last_price` | `NUMERIC(18, 2)` | Opcional; `CHECK (last_price IS NULL OR last_price > 0)`; par junto a `last_price_currency` |
+| `last_price_currency` | `VARCHAR(8)` | Opcional; `CHECK (last_price_currency IS NULL OR last_price_currency IN ('usd', 'ves'))`; par nulo/definido con `last_price` |
+| `archived_at` | `TIMESTAMPTZ` | `NULL` mientras está activo; UTC cuando se archiva |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
+### `product_prices`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por la aplicación |
+| `product_id` | `UUID` | FK a `products.id`, `ON DELETE RESTRICT`; índice compuesto `(product_id, recorded_on)` |
+| `price` | `NUMERIC(18, 2)` | `CHECK (price > 0)` |
+| `currency` | `VARCHAR(8)` | `CHECK (currency IN ('usd', 'ves'))` |
+| `recorded_on` | `DATE` | Fecha del registro en `America/Caracas` |
+| `source` | `VARCHAR(16)` | `CHECK (source IN ('manual', 'purchase'))` |
+| `list_item_id` | `UUID` | FK opcional a `shopping_list_items.id`, `ON DELETE RESTRICT`; obligatorio si `purchase`, nulo si `manual`; índice único parcial `uq_product_prices_list_item_id` donde `list_item_id IS NOT NULL` |
+| `bcv_rate_value` | `NUMERIC(18, 8)` | `CHECK (bcv_rate_value > 0)` |
+| `bcv_rate_date` | `DATE` | `value_date` de la tasa BCV vigente |
+| `usdt_rate_value` | `NUMERIC(18, 8)` | `CHECK (usdt_rate_value > 0)` |
+| `usdt_rate_date` | `DATE` | `value_date` de la tasa USDT vigente |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+
+### `shopping_lists`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `name` | `VARCHAR(80)` | `CHECK (char_length(btrim(name)) BETWEEN 1 AND 80)` |
+| `status` | `VARCHAR(16)` | `CHECK (status IN ('open', 'closed'))` |
+| `closed_at` | `TIMESTAMPTZ` | UTC; `NULL` si `open`, obligatorio si `closed` (CHECK compuesto con `expense_id`) |
+| `expense_id` | `UUID` | FK opcional a `expenses.id`, `ON DELETE RESTRICT`; `NULL` si `open`, obligatorio si `closed` |
+| `deleted_at` | `TIMESTAMPTZ` | `NULL` mientras está activa; UTC en borrado lógico |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
+### `shopping_list_items`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `list_id` | `UUID` | FK a `shopping_lists.id`, `ON DELETE RESTRICT`; único junto a `product_id` (`uq_shopping_list_items_list_product`) |
+| `product_id` | `UUID` | FK a `products.id`, `ON DELETE RESTRICT` |
+| `quantity` | `NUMERIC(18, 3)` | `CHECK (quantity > 0)` |
+| `status` | `VARCHAR(16)` | `CHECK (status IN ('pending', 'bought'))` |
+| `bought_price` | `NUMERIC(18, 2)` | `NULL` si `pending`; `> 0` y obligatorio si `bought` |
+| `bought_currency` | `VARCHAR(8)` | `NULL` si `pending`; `'usd'` o `'ves'` y obligatorio si `bought` |
+| `bought_at` | `TIMESTAMPTZ` | UTC; `NULL` si `pending`, obligatorio si `bought` |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
 ## Reglas
 
 - Una migración de Alembic por cambio de esquema, con un mensaje descriptivo (`alembic revision --autogenerate -m "create users"`), revisada a mano antes de aplicarla.

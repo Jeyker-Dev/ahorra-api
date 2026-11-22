@@ -60,6 +60,28 @@ from app.rates.sources import (
     build_bcv_http_client,
     build_default_http_client,
 )
+from app.shopping.api import router as shopping_router
+from app.shopping.errors import (
+    DuplicateListItem,
+    InvalidDaysAhead,
+    InvalidItemPrice,
+    InvalidItemQuantity,
+    InvalidListName,
+    ItemAlreadyBought,
+    ListClosed,
+    ListDeleted,
+    ListItemNotFound,
+    NothingBought,
+    PriceRequired,
+    ProductArchived,
+    ShoppingListNotFound,
+)
+from app.shopping.errors import (
+    ProductNotFound as ShoppingProductNotFound,
+)
+from app.shopping.errors import (
+    RateNotAvailableForDate as ShoppingRateNotAvailableForDate,
+)
 from app.users.api import router as users_router
 
 
@@ -133,6 +155,28 @@ def _register_product_error_handlers(application: FastAPI) -> None:
         application.add_exception_handler(exc_type, _make_detail_handler(status_code))
 
 
+def _register_shopping_error_handlers(application: FastAPI) -> None:
+    mappings: tuple[tuple[type[Exception], int], ...] = (
+        (ShoppingListNotFound, status.HTTP_404_NOT_FOUND),
+        (ListItemNotFound, status.HTTP_404_NOT_FOUND),
+        (ShoppingProductNotFound, status.HTTP_404_NOT_FOUND),
+        (ProductArchived, status.HTTP_409_CONFLICT),
+        (DuplicateListItem, status.HTTP_409_CONFLICT),
+        (ItemAlreadyBought, status.HTTP_409_CONFLICT),
+        (ListClosed, status.HTTP_409_CONFLICT),
+        (ListDeleted, status.HTTP_409_CONFLICT),
+        (ShoppingRateNotAvailableForDate, status.HTTP_409_CONFLICT),
+        (InvalidListName, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidItemQuantity, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidItemPrice, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidDaysAhead, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (PriceRequired, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (NothingBought, status.HTTP_422_UNPROCESSABLE_CONTENT),
+    )
+    for exc_type, status_code in mappings:
+        application.add_exception_handler(exc_type, _make_detail_handler(status_code))
+
+
 def create_app(
     settings: Settings | None = None,
     clock: Clock | None = None,
@@ -173,6 +217,7 @@ def create_app(
     _register_income_error_handlers(application)
     _register_expense_error_handlers(application)
     _register_product_error_handlers(application)
+    _register_shopping_error_handlers(application)
     application.include_router(health_router)
     application.include_router(auth_router)
     application.include_router(users_router)
@@ -180,6 +225,7 @@ def create_app(
     application.include_router(income_router)
     application.include_router(expenses_router)
     application.include_router(products_router)
+    application.include_router(shopping_router)
     return application
 
 

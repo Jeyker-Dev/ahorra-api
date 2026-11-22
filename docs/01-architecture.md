@@ -25,7 +25,7 @@ src/app/
 ├── config.py                Settings (pydantic-settings), cargadas una vez al arrancar
 ├── db.py                    Engine async, fábrica de sesiones y Base declarativa
 ├── errors.py                BusinessRuleError, la base de todos los errores de negocio
-├── clock.py                 Protocolo Clock y SystemClock (la hora se inyecta)
+├── clock.py                 Protocolo Clock, SystemClock y caracas_date (America/Caracas)
 ├── users/
 │   ├── domain.py            User (dataclass congelada) y el puerto UserRepository
 │   ├── errors.py            EmailAlreadyRegistered, PasswordTooShort
@@ -72,6 +72,22 @@ src/app/
 │   ├── service.py           Casos de uso: categorías, upsert/borrado lógico de gastos y resumen
 │   ├── schemas.py           Esquemas Pydantic HTTP de categorías, gastos y resumen
 │   └── api.py               Router: /expenses/categories, /expenses/summary y /expenses
+├── products/
+│   ├── domain.py            Product, PriceEntry, puertos y DTOs de precio
+│   ├── errors.py            Errores de negocio de catálogo, historial de precios y tasa faltante
+│   ├── models.py            ProductModel y ProductPriceModel (SQLAlchemy)
+│   ├── repository.py        Repositorios PostgreSQL (SqlAlchemyProductRepository, SqlAlchemyProductPriceRepository)
+│   ├── service.py           Casos de uso: catálogo, archivo/desarchivo, historial y sync de precios de compra
+│   ├── schemas.py           Esquemas Pydantic HTTP de productos e historial de precios
+│   └── api.py               Router: /products
+├── shopping/
+│   ├── domain.py            ShoppingList, ShoppingListItem, totales, recomendaciones y puertos entre dominios
+│   ├── errors.py            Errores de negocio de listas, ítems, compras, cierre y recomendaciones
+│   ├── models.py            ShoppingListModel y ShoppingListItemModel (SQLAlchemy)
+│   ├── repository.py        Repositorios PostgreSQL (SqlAlchemyShoppingListRepository, SqlAlchemyShoppingListItemRepository)
+│   ├── service.py           Casos de uso: listas, ítems, compra/reverso, totales, cierre y recomendaciones
+│   ├── schemas.py           Esquemas Pydantic HTTP de listas, ítems, totales y recomendaciones
+│   └── api.py               Router: /shopping/lists y /shopping/recommendations
 └── health/
     └── api.py               Router: GET /health
 scripts/
@@ -97,13 +113,13 @@ Reglas entre capas:
 2. `service.py` depende de los puertos de `domain.py` (protocolos), nunca de una implementación concreta. Los colaboradores se inyectan por `__init__`.
 3. `repository.py` y `models.py` implementan los puertos con SQLAlchemy. Los modelos no salen de esa capa: el repositorio devuelve dataclasses de dominio.
 4. El borde HTTP (`api.py` más los manejadores registrados en `main.py` junto con `schemas.py`) traduce Pydantic a dominio, llama al servicio y convierte los errores de negocio en respuestas HTTP.
-5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users`, `income` consulta `RatesService.bcv_in_force` a través del protocolo `BcvRateLookup` y `expenses` consulta `RatesService.bcv_in_force` y `RatesService.usdt_in_force` a través de su protocolo `RateLookup` y `Depends(get_rates_service)`), nunca sus modelos ni su repositorio.
+5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users`, `income` y `products` consultan `RatesService` mediante protocolos de tasa, y `shopping` consume `ProductsService`, `ExpenseService` y `RatesService` mediante protocolos en `shopping/domain.py` y adaptadores finos en `shopping/api.py`), nunca sus modelos ni su repositorio.
 
 ## Convenciones críticas
 
 - Los montos de dinero, cuando una app los agregue, se guardan como `NUMERIC` y se manejan con `Decimal`. Nunca `float`.
 - Toda fecha y hora se guarda en UTC (`TIMESTAMP WITH TIME ZONE`) y se obtiene del `Clock` inyectado, nunca de `datetime.now()` directo en el dominio o los servicios.
-- Los ids son UUID generados por la aplicación, salvo las entidades que la app móvil crea offline (`income_rules`, `expense_categories` y `expenses`), cuyo UUID viene del cliente.
+- Los ids son UUID generados por la aplicación, salvo las entidades que la app móvil crea offline (`income_rules`, `expense_categories`, `expenses`, `products`, `shopping_lists` y `shopping_list_items`), cuyo UUID viene del cliente.
 - Cada cambio de esquema es una migración de Alembic versionada; nunca `create_all()` fuera de los tests.
 - Los errores de negocio heredan de `BusinessRuleError`, uno por regla. Solo el borde HTTP (`api.py` y los manejadores en `main.py`) los convierte en códigos de estado.
 - Los secretos solo vienen del entorno. `.env.example` lista todas las variables con valores vacíos y `.env` nunca se versiona.
@@ -136,8 +152,25 @@ Reglas entre capas:
 | GET | `/expenses/{expense_id}` | Bearer | Devuelve un gasto no eliminado por id (`404` si falta o fue eliminado) |
 | DELETE | `/expenses/{expense_id}` | Bearer | Borrado lógico idempotente (`deleted_at`) de un gasto |
 | GET | `/expenses` | Bearer | Lista gastos no eliminados filtrados por rango inclusivo de `spent_on` y `category_id` opcional |
+| PUT | `/products/{product_id}` | Bearer | Crea (201) o actualiza idempotentemente (200) un producto del catálogo |
+| GET | `/products` | Bearer | Lista productos (`include_archived=false` por defecto; activas primero si se incluyen archivados) |
+| GET | `/products/{product_id}` | Bearer | Devuelve un producto por id |
+| POST | `/products/{product_id}/archive` | Bearer | Archiva un producto de forma idempotente |
+| POST | `/products/{product_id}/unarchive` | Bearer | Desarchiva un producto de forma idempotente |
+| GET | `/products/{product_id}/prices` | Bearer | Historial de precios de un producto filtrado por rango inclusivo de `recorded_on` |
+| PUT | `/shopping/lists/{list_id}` | Bearer | Crea (201) o renombra idempotentemente (200) una lista de compras abierta |
+| GET | `/shopping/lists` | Bearer | Lista listas no eliminadas, con filtro opcional `status` |
+| GET | `/shopping/lists/{list_id}` | Bearer | Devuelve una lista no eliminada con sus ítems y datos del producto |
+| DELETE | `/shopping/lists/{list_id}` | Bearer | Borrado lógico idempotente (`deleted_at`) de una lista |
+| GET | `/shopping/lists/{list_id}/totals` | Bearer | Totales estimados y comprados de una lista con las tasas vigentes hoy |
+| POST | `/shopping/lists/{list_id}/close` | Bearer | Cierra la lista y registra idempotentemente el gasto en `expenses` |
+| PUT | `/shopping/lists/{list_id}/items/{item_id}` | Bearer | Agrega (201) o actualiza (200) un ítem en una lista abierta |
+| DELETE | `/shopping/lists/{list_id}/items/{item_id}` | Bearer | Elimina físicamente (`204`) un ítem `pending` de una lista abierta |
+| POST | `/shopping/lists/{list_id}/items/{item_id}/buy` | Bearer | Marca o corrige un ítem como comprado y registra su precio `purchase` |
+| POST | `/shopping/lists/{list_id}/items/{item_id}/unbuy` | Bearer | Revierte un ítem a `pending` y restaura `last_price` del producto |
+| GET | `/shopping/recommendations` | Bearer | Productos recomendados según frecuencia de compra y totales estimados |
 
-El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md), [areas/income.md](areas/income.md) y [areas/expenses.md](areas/expenses.md).
+El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md), [areas/income.md](areas/income.md), [areas/expenses.md](areas/expenses.md), [areas/products.md](areas/products.md) y [areas/shopping.md](areas/shopping.md).
 
 ## Decisiones
 

@@ -24,7 +24,7 @@ Categorías y gastos con su moneda y la tasa vigente al registrarlos. Hecha.
 
 ## Fase 4 — Productos y lista de compras
 
-Catálogo propio, último precio, historial de precios y recomendación de compras.
+Catálogo propio, último precio, historial de precios y recomendación de compras. Hecha.
 
 ## Fase 5 — Metas
 

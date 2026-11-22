@@ -11,6 +11,8 @@
 | [areas/rates.md](areas/rates.md) | Fuentes de tasas BCV/USDT, validación cruzada, CLI y scheduler |
 | [areas/income.md](areas/income.md) | Reglas de ingresos recurrentes, ocurrencias, horizonte, cobros y endpoints |
 | [areas/expenses.md](areas/expenses.md) | Reglas de categorías, gastos, tasas históricas, borrado lógico, resumen y endpoints |
+| [areas/products.md](areas/products.md) | Reglas del catálogo de productos, historial de precios y endpoints |
+| [areas/shopping.md](areas/shopping.md) | Reglas de listas de compras, ítems, totales, cierre, recomendaciones y coordinación entre dominios |
 | [areas/database.md](areas/database.md) | Tablas, reglas de migraciones y riesgos |
 | [areas/infrastructure.md](areas/infrastructure.md) | Variables de entorno, Docker, salud y comandos de calidad |
 | Decisiones (FunWork) | Los ADR viven en el módulo de Decisiones de FunWork, proyecto Ahorra; no en este repo |
