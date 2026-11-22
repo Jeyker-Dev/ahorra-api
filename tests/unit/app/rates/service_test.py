@@ -592,3 +592,48 @@ async def test_get_latest_prefers_higher_value_date_for_bcv_over_fetched_at() ->
     bcv, _ = await service.get_latest()
 
     assert bcv == today_fetched_earlier
+
+
+async def test_bcv_in_force_returns_most_recent_on_or_before_date_ignoring_status() -> None:
+    older = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.bcv,
+        value=Decimal("910.00000000"),
+        value_date=date(2026, 11, 18),
+        origin=RateOrigin.bcv_html,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 18, 13, 0, tzinfo=UTC),
+    )
+    target_in_review = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.bcv,
+        value=Decimal("917.50000000"),
+        value_date=date(2026, 11, 19),
+        origin=RateOrigin.dolarapi,
+        status=RateStatus.in_review,
+        fetched_at=datetime(2026, 11, 19, 13, 0, tzinfo=UTC),
+    )
+    future = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.bcv,
+        value=Decimal("925.00000000"),
+        value_date=date(2026, 11, 22),
+        origin=RateOrigin.bcv_html,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 21, 13, 0, tzinfo=UTC),
+    )
+    usdt_same_day = ExchangeRate(
+        id=uuid4(),
+        kind=RateKind.usdt,
+        value=Decimal("960.00000000"),
+        value_date=date(2026, 11, 20),
+        origin=RateOrigin.binance_p2p,
+        status=RateStatus.confirmed,
+        fetched_at=datetime(2026, 11, 20, 14, 0, tzinfo=UTC),
+    )
+    repo = _InMemoryRateRepository([older, target_in_review, future, usdt_same_day])
+    service = _make_service(repo)
+
+    assert await service.bcv_in_force(date(2026, 11, 20)) == target_in_review
+    assert await service.bcv_in_force(date(2026, 11, 19)) == target_in_review
+    assert await service.bcv_in_force(date(2026, 11, 17)) is None

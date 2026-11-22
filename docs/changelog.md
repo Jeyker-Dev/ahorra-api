@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-22
+
+- **Fase 2 — Ingresos recurrentes**: dominio `income/`, tablas `income_rules` (con `days SMALLINT[]`, `ended_at` y `CHECK`s) e `income_occurrences` (con `CHECK` compuesto de cobro y unicidad `(rule_id, expected_date)`), servicio con upsert idempotente por `id` generado por el cliente, cierre con `ended_at`, extensión de horizonte configurable (`INCOME_HORIZON_MONTHS`), registro/corrección/reverso de cobros usando `RatesService.bcv_in_force`, endpoints `/income/rules` y `/income/occurrences`, script `scripts/generate_income_occurrences.py` y cron diario a las `00:30` en `America/Caracas`.
+
 ## 2026-11-20
 
 - **Fase 1 — Tasas de cambio**: dominio `rates/`, tabla `exchange_rates` con índice único parcial para BCV, fuentes `BcvHtmlSource` (con certificado intermedio Sectigo OV R36 empaquetado), `DolarApiSource` y `BinanceP2PSource`, servicio con validación cruzada y tolerancia configurable (`BCV_TOLERANCE_PERCENT`), endpoints `GET /rates/latest` y `GET /rates`, scripts CLI (`fetch_rates.py`, `set_rate.py`, `review_rates.py`) y contenedor `scheduler` con `supercronic`.

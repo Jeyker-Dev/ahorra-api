@@ -201,6 +201,10 @@ class RatesService:
         usdt = await self._repository.latest(RateKind.usdt)
         return bcv, usdt
 
+    async def bcv_in_force(self, on: date) -> ExchangeRate | None:
+        """Return the most recent BCV rate with value_date <= on, regardless of status."""
+        return await self._repository.latest_bcv_in_force(on)
+
     async def get_history(
         self,
         kind: RateKind,

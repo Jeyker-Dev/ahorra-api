@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -11,6 +11,18 @@ from app.clock import Clock, SystemClock
 from app.config import Settings, get_settings
 from app.db import create_engine, create_session_factory
 from app.health.api import router as health_router
+from app.income.api import router as income_router
+from app.income.errors import (
+    IncomeRuleEnded,
+    IncomeRuleNotFound,
+    InvalidIncomeAmount,
+    InvalidIncomeDays,
+    InvalidIncomeName,
+    InvalidIncomePeriod,
+    OccurrenceNotFound,
+    OccurrenceNotReceived,
+    RateNotAvailableForDate,
+)
 from app.rates.api import router as rates_router
 from app.rates.domain import RateSources
 from app.rates.sources import (
@@ -36,6 +48,31 @@ async def _handle_invalid_refresh_token(_request: Request, _exc: Exception) -> J
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={"detail": "Invalid refresh token"},
     )
+
+
+def _make_detail_handler(
+    status_code: int,
+) -> Callable[[Request, Exception], Awaitable[JSONResponse]]:
+    async def _handler(_request: Request, exc: Exception) -> JSONResponse:
+        return JSONResponse(status_code=status_code, content={"detail": str(exc)})
+
+    return _handler
+
+
+def _register_income_error_handlers(application: FastAPI) -> None:
+    mappings: tuple[tuple[type[Exception], int], ...] = (
+        (IncomeRuleNotFound, status.HTTP_404_NOT_FOUND),
+        (OccurrenceNotFound, status.HTTP_404_NOT_FOUND),
+        (IncomeRuleEnded, status.HTTP_409_CONFLICT),
+        (OccurrenceNotReceived, status.HTTP_409_CONFLICT),
+        (RateNotAvailableForDate, status.HTTP_409_CONFLICT),
+        (InvalidIncomeName, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidIncomeAmount, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidIncomeDays, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidIncomePeriod, status.HTTP_422_UNPROCESSABLE_CONTENT),
+    )
+    for exc_type, status_code in mappings:
+        application.add_exception_handler(exc_type, _make_detail_handler(status_code))
 
 
 def create_app(
@@ -75,10 +112,12 @@ def create_app(
     application.add_exception_handler(InvalidCredentials, _handle_invalid_credentials)
     application.add_exception_handler(InvalidRefreshToken, _handle_invalid_refresh_token)
     application.add_exception_handler(RefreshTokenReused, _handle_invalid_refresh_token)
+    _register_income_error_handlers(application)
     application.include_router(health_router)
     application.include_router(auth_router)
     application.include_router(users_router)
     application.include_router(rates_router)
+    application.include_router(income_router)
     return application
 
 

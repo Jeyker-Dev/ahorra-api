@@ -17,6 +17,7 @@ def _clear_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "ACCESS_TOKEN_TTL_MINUTES",
         "REFRESH_TOKEN_TTL_DAYS",
         "BCV_TOLERANCE_PERCENT",
+        "INCOME_HORIZON_MONTHS",
     ):
         monkeypatch.delenv(var, raising=False)
 
@@ -35,6 +36,7 @@ def test_settings_loads_with_required_env_and_defaults(
     assert settings.access_token_ttl_minutes == 15
     assert settings.refresh_token_ttl_days == 30
     assert settings.bcv_tolerance_percent == Decimal("0.5")
+    assert settings.income_horizon_months == 3
 
 
 def test_settings_overrides_optional_ttls(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -44,12 +46,28 @@ def test_settings_overrides_optional_ttls(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("ACCESS_TOKEN_TTL_MINUTES", "10")
     monkeypatch.setenv("REFRESH_TOKEN_TTL_DAYS", "7")
     monkeypatch.setenv("BCV_TOLERANCE_PERCENT", "1.25")
+    monkeypatch.setenv("INCOME_HORIZON_MONTHS", "6")
 
     settings = Settings(_env_file=None)
 
     assert settings.access_token_ttl_minutes == 10
     assert settings.refresh_token_ttl_days == 7
     assert settings.bcv_tolerance_percent == Decimal("1.25")
+    assert settings.income_horizon_months == 6
+
+
+def test_settings_rejects_non_positive_income_horizon(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _clear_settings_env(monkeypatch)
+    monkeypatch.setenv("DATABASE_URL", VALID_DATABASE_URL)
+    monkeypatch.setenv("JWT_SECRET", VALID_JWT_SECRET)
+    monkeypatch.setenv("INCOME_HORIZON_MONTHS", "0")
+
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(_env_file=None)
+
+    assert "income_horizon_months" in str(exc_info.value)
 
 
 def test_settings_fails_when_database_url_is_missing(
@@ -148,5 +166,6 @@ def test_env_example_lists_all_documented_variables() -> None:
         "POSTGRES_PASSWORD",
         "POSTGRES_DB",
         "BCV_TOLERANCE_PERCENT",
+        "INCOME_HORIZON_MONTHS",
     }
     assert expected_keys.issubset(keys)

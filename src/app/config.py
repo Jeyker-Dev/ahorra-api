@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     access_token_ttl_minutes: int = Field(default=15, gt=0)
     refresh_token_ttl_days: int = Field(default=30, gt=0)
     bcv_tolerance_percent: Decimal = Field(default=Decimal("0.5"), ge=Decimal("0"))
+    income_horizon_months: int = Field(default=3, gt=0)
 
 
 @lru_cache(maxsize=1)

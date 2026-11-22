@@ -9,10 +9,17 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from app.auth.models import RefreshTokenModel
 from app.config import get_settings
 from app.db import Base
+from app.income.models import IncomeOccurrenceModel, IncomeRuleModel
 from app.rates.models import ExchangeRateModel
 from app.users.models import UserModel
 
-_MODELS = (UserModel, RefreshTokenModel, ExchangeRateModel)
+_MODELS = (
+    UserModel,
+    RefreshTokenModel,
+    ExchangeRateModel,
+    IncomeRuleModel,
+    IncomeOccurrenceModel,
+)
 
 config = context.config
 

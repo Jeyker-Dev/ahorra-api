@@ -39,6 +39,38 @@ Decisión de base: ADR-003.
 | `status` | `VARCHAR(16)` | `CHECK (status IN ('confirmed', 'in_review'))` |
 | `fetched_at` | `TIMESTAMPTZ` | UTC; índice compuesto `(kind, fetched_at DESC)` |
 
+### `income_rules`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `name` | `VARCHAR(100)` | `CHECK (char_length(btrim(name)) BETWEEN 1 AND 100)` |
+| `amount` | `NUMERIC(18, 2)` | `CHECK (amount > 0)` |
+| `currency` | `VARCHAR(8)` | `CHECK (currency IN ('usd', 'ves'))` |
+| `days` | `SMALLINT[]` | `CHECK (cardinality(days) > 0)` |
+| `start_date` | `DATE` | Inicio inclusivo de la regla |
+| `end_date` | `DATE` | Opcional; `CHECK (end_date IS NULL OR end_date >= start_date)` |
+| `ended_at` | `TIMESTAMPTZ` | `NULL` mientras está activa; UTC cuando se finaliza |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
+### `income_occurrences`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por la aplicación |
+| `rule_id` | `UUID` | FK a `income_rules.id`, `ON DELETE RESTRICT`; único junto a `expected_date` |
+| `expected_date` | `DATE` | Con índice `ix_income_occurrences_expected_date` |
+| `expected_amount` | `NUMERIC(18, 2)` | `CHECK (expected_amount > 0)` |
+| `currency` | `VARCHAR(8)` | `CHECK (currency IN ('usd', 'ves'))` |
+| `status` | `VARCHAR(16)` | `CHECK (status IN ('expected', 'received'))` |
+| `received_date` | `DATE` | `NULL` si `expected`, obligatorio si `received` (CHECK compuesto) |
+| `received_amount` | `NUMERIC(18, 2)` | `NULL` si `expected`; `> 0` y obligatorio si `received` |
+| `rate_value` | `NUMERIC(18, 8)` | `NULL` si `expected`; `> 0` y obligatorio si `received` |
+| `rate_date` | `DATE` | `value_date` de la tasa BCV; `NULL` si `expected`, obligatorio si `received` |
+| `received_at` | `TIMESTAMPTZ` | UTC; `NULL` si `expected`, obligatorio si `received` |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
 ## Reglas
 
 - Una migración de Alembic por cambio de esquema, con un mensaje descriptivo (`alembic revision --autogenerate -m "create users"`), revisada a mano antes de aplicarla.

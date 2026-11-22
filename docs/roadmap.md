@@ -16,7 +16,7 @@ Consulta periódica de BCV y USDT/Bs, historial de tasas y endpoint con la últi
 
 ## Fase 2 — Ingresos recurrentes
 
-Reglas de repetición, generación de ocurrencias y confirmación de cada ocurrencia como recibida.
+Reglas de repetición, generación de ocurrencias y confirmación de cada ocurrencia como recibida. Hecha.
 
 ## Fase 3 — Gastos por categoría
 

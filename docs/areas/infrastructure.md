@@ -11,6 +11,7 @@ Variables de entorno leídas con pydantic-settings en `src/app/config.py`. `.env
 | `ACCESS_TOKEN_TTL_MINUTES` | `15` | Opcional |
 | `REFRESH_TOKEN_TTL_DAYS` | `30` | Opcional |
 | `BCV_TOLERANCE_PERCENT` | `0.5` | Opcional; tolerancia porcentual entre BCV HTML y dolarapi |
+| `INCOME_HORIZON_MONTHS` | `3` | Opcional; meses calendario del horizonte de ocurrencias de ingresos |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `app` | Solo para el servicio `db` de compose |
 
 ## Docker
@@ -20,7 +21,7 @@ Variables de entorno leídas con pydantic-settings en `src/app/config.py`. `.env
 - `docker-compose.yml`:
   - `db`: PostgreSQL 17 con volumen persistente y `healthcheck` (`pg_isready`).
   - `api`: depende de `db` en estado `healthy`, corre `alembic upgrade head` y después Uvicorn en el puerto 8000, expone `healthcheck` sobre `GET /health` con `urllib` y lee `.env`.
-  - `scheduler`: reutiliza la misma imagen de `api`, corre `supercronic /app/docker/scheduler/crontab` como usuario no root con `TZ=America/Caracas`, depende de `db` y `api` en estado `healthy` (garantizando que las migraciones ya corrieron), lee `.env` y usa `restart: unless-stopped`.
+  - `scheduler`: reutiliza la misma imagen de `api`, corre `supercronic /app/docker/scheduler/crontab` como usuario no root con `TZ=America/Caracas` (tasas BCV/USDT y extensión diaria del horizonte de ingresos a las `00:30`), depende de `db` y `api` en estado `healthy` (garantizando que las migraciones ya corrieron), lee `.env` y usa `restart: unless-stopped`.
 - El mismo compose sirve en local y en el VPS; en el VPS solo cambia el `.env`.
 
 ## Salud
