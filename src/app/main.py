@@ -40,6 +40,17 @@ from app.income.errors import (
 from app.income.errors import (
     RateNotAvailableForDate as IncomeRateNotAvailableForDate,
 )
+from app.products.api import router as products_router
+from app.products.errors import (
+    InvalidPricePeriod,
+    InvalidProductName,
+    InvalidProductPrice,
+    ProductNameTaken,
+    ProductNotFound,
+)
+from app.products.errors import (
+    RateNotAvailableForDate as ProductRateNotAvailableForDate,
+)
 from app.rates.api import router as rates_router
 from app.rates.domain import RateSources
 from app.rates.sources import (
@@ -109,6 +120,19 @@ def _register_expense_error_handlers(application: FastAPI) -> None:
         application.add_exception_handler(exc_type, _make_detail_handler(status_code))
 
 
+def _register_product_error_handlers(application: FastAPI) -> None:
+    mappings: tuple[tuple[type[Exception], int], ...] = (
+        (ProductNotFound, status.HTTP_404_NOT_FOUND),
+        (ProductNameTaken, status.HTTP_409_CONFLICT),
+        (ProductRateNotAvailableForDate, status.HTTP_409_CONFLICT),
+        (InvalidProductName, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidProductPrice, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidPricePeriod, status.HTTP_422_UNPROCESSABLE_CONTENT),
+    )
+    for exc_type, status_code in mappings:
+        application.add_exception_handler(exc_type, _make_detail_handler(status_code))
+
+
 def create_app(
     settings: Settings | None = None,
     clock: Clock | None = None,
@@ -148,12 +172,14 @@ def create_app(
     application.add_exception_handler(RefreshTokenReused, _handle_invalid_refresh_token)
     _register_income_error_handlers(application)
     _register_expense_error_handlers(application)
+    _register_product_error_handlers(application)
     application.include_router(health_router)
     application.include_router(auth_router)
     application.include_router(users_router)
     application.include_router(rates_router)
     application.include_router(income_router)
     application.include_router(expenses_router)
+    application.include_router(products_router)
     return application
 
 

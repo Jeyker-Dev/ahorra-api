@@ -9,8 +9,8 @@ import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, Field, ValidationError
 
-from app.clock import Clock
-from app.rates.domain import Quote, caracas_date
+from app.clock import Clock, caracas_date
+from app.rates.domain import Quote
 from app.rates.errors import QuoteUnavailable
 
 REQUEST_TIMEOUT_SECONDS = 10.0

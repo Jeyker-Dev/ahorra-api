@@ -4,14 +4,6 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
-from zoneinfo import ZoneInfo
-
-CARACAS_TZ = ZoneInfo("America/Caracas")
-
-
-def caracas_date(ts: datetime) -> date:
-    """Convert an aware timestamp to its calendar date in America/Caracas."""
-    return ts.astimezone(CARACAS_TZ).date()
 
 
 class RateKind(StrEnum):

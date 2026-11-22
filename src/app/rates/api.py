@@ -6,10 +6,10 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_user
-from app.clock import Clock
+from app.clock import Clock, caracas_date
 from app.config import Settings
 from app.db import get_session
-from app.rates.domain import RateSources, caracas_date
+from app.rates.domain import RateSources
 from app.rates.repository import SqlAlchemyExchangeRateRepository
 from app.rates.schemas import LatestRatesOut, RateHistoryQuery, RateOut
 from app.rates.service import RatesService

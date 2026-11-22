@@ -3,10 +3,10 @@ import asyncio
 from datetime import date
 from decimal import Decimal
 
-from app.clock import Clock, SystemClock
+from app.clock import Clock, SystemClock, caracas_date
 from app.config import Settings, get_settings
 from app.rates.cli import noop_sources, open_rates_service, parse_decimal_arg, run_cli
-from app.rates.domain import ExchangeRate, RateKind, caracas_date
+from app.rates.domain import ExchangeRate, RateKind
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:

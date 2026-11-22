@@ -1,5 +1,13 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Protocol
+from zoneinfo import ZoneInfo
+
+CARACAS_TZ = ZoneInfo("America/Caracas")
+
+
+def caracas_date(ts: datetime) -> date:
+    """Convert an aware timestamp to its calendar date in America/Caracas."""
+    return ts.astimezone(CARACAS_TZ).date()
 
 
 class Clock(Protocol):

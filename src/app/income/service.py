@@ -3,6 +3,7 @@ from datetime import date, datetime
 from decimal import ROUND_HALF_EVEN, Decimal
 from uuid import UUID, uuid4
 
+from app.clock import caracas_date
 from app.income.domain import (
     MAX_RULE_NAME_LENGTH,
     MIN_RULE_NAME_LENGTH,
@@ -28,7 +29,6 @@ from app.income.errors import (
     OccurrenceNotReceived,
     RateNotAvailableForDate,
 )
-from app.rates.domain import caracas_date
 
 AMOUNT_QUANTUM = Decimal("0.01")
 

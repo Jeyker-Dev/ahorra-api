@@ -11,7 +11,9 @@ from app.config import get_settings
 from app.db import Base
 from app.expenses.models import ExpenseCategoryModel, ExpenseModel
 from app.income.models import IncomeOccurrenceModel, IncomeRuleModel
+from app.products.models import ProductModel, ProductPriceModel
 from app.rates.models import ExchangeRateModel
+from app.shopping.models import ShoppingListItemModel, ShoppingListModel
 from app.users.models import UserModel
 
 _MODELS = (
@@ -22,6 +24,10 @@ _MODELS = (
     IncomeOccurrenceModel,
     ExpenseCategoryModel,
     ExpenseModel,
+    ProductModel,
+    ProductPriceModel,
+    ShoppingListModel,
+    ShoppingListItemModel,
 )
 
 config = context.config

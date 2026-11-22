@@ -4,7 +4,7 @@ from datetime import date
 from decimal import ROUND_HALF_EVEN, Decimal
 from uuid import UUID, uuid4
 
-from app.clock import Clock
+from app.clock import Clock, caracas_date
 from app.rates.domain import (
     ExchangeRate,
     ExchangeRateRepository,
@@ -14,7 +14,6 @@ from app.rates.domain import (
     RateOrigin,
     RateSources,
     RateStatus,
-    caracas_date,
 )
 from app.rates.errors import (
     InvalidRateValue,
