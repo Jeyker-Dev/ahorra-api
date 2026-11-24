@@ -88,6 +88,14 @@ src/app/
 │   ├── service.py           Casos de uso: listas, ítems, compra/reverso, totales, cierre y recomendaciones
 │   ├── schemas.py           Esquemas Pydantic HTTP de listas, ítems, totales y recomendaciones
 │   └── api.py               Router: /shopping/lists y /shopping/recommendations
+├── goals/
+│   ├── domain.py            Goal, GoalContribution, GoalProgress y puertos
+│   ├── errors.py            Errores de negocio de metas, aportes y tasa faltante
+│   ├── models.py            GoalModel y GoalContributionModel (SQLAlchemy)
+│   ├── repository.py        Repositorios PostgreSQL (SqlAlchemyGoalRepository, SqlAlchemyGoalContributionRepository)
+│   ├── service.py           Casos de uso: metas, archivo/borrado lógico, aportes y progreso
+│   ├── schemas.py           Esquemas Pydantic HTTP de metas, progreso y aportes
+│   └── api.py               Router: /goals
 └── health/
     └── api.py               Router: GET /health
 scripts/
@@ -113,13 +121,13 @@ Reglas entre capas:
 2. `service.py` depende de los puertos de `domain.py` (protocolos), nunca de una implementación concreta. Los colaboradores se inyectan por `__init__`.
 3. `repository.py` y `models.py` implementan los puertos con SQLAlchemy. Los modelos no salen de esa capa: el repositorio devuelve dataclasses de dominio.
 4. El borde HTTP (`api.py` más los manejadores registrados en `main.py` junto con `schemas.py`) traduce Pydantic a dominio, llama al servicio y convierte los errores de negocio en respuestas HTTP.
-5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users`, `income` y `products` consultan `RatesService` mediante protocolos de tasa, y `shopping` consume `ProductsService`, `ExpenseService` y `RatesService` mediante protocolos en `shopping/domain.py` y adaptadores finos en `shopping/api.py`), nunca sus modelos ni su repositorio.
+5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users`, `income`, `expenses`, `products` y `goals` consultan `RatesService` mediante protocolos de tasa, y `shopping` consume `ProductsService`, `ExpenseService` y `RatesService` mediante protocolos en `shopping/domain.py` y adaptadores finos en `shopping/api.py`), nunca sus modelos ni su repositorio.
 
 ## Convenciones críticas
 
 - Los montos de dinero, cuando una app los agregue, se guardan como `NUMERIC` y se manejan con `Decimal`. Nunca `float`.
 - Toda fecha y hora se guarda en UTC (`TIMESTAMP WITH TIME ZONE`) y se obtiene del `Clock` inyectado, nunca de `datetime.now()` directo en el dominio o los servicios.
-- Los ids son UUID generados por la aplicación, salvo las entidades que la app móvil crea offline (`income_rules`, `expense_categories`, `expenses`, `products`, `shopping_lists` y `shopping_list_items`), cuyo UUID viene del cliente.
+- Los ids son UUID generados por la aplicación, salvo las entidades que la app móvil crea offline (`income_rules`, `expense_categories`, `expenses`, `products`, `shopping_lists`, `shopping_list_items`, `goals` y `goal_contributions`), cuyo UUID viene del cliente.
 - Cada cambio de esquema es una migración de Alembic versionada; nunca `create_all()` fuera de los tests.
 - Los errores de negocio heredan de `BusinessRuleError`, uno por regla. Solo el borde HTTP (`api.py` y los manejadores en `main.py`) los convierte en códigos de estado.
 - Los secretos solo vienen del entorno. `.env.example` lista todas las variables con valores vacíos y `.env` nunca se versiona.
@@ -169,8 +177,17 @@ Reglas entre capas:
 | POST | `/shopping/lists/{list_id}/items/{item_id}/buy` | Bearer | Marca o corrige un ítem como comprado y registra su precio `purchase` |
 | POST | `/shopping/lists/{list_id}/items/{item_id}/unbuy` | Bearer | Revierte un ítem a `pending` y restaura `last_price` del producto |
 | GET | `/shopping/recommendations` | Bearer | Productos recomendados según frecuencia de compra y totales estimados |
+| PUT | `/goals/{goal_id}` | Bearer | Crea (201) o actualiza idempotentemente (200) una meta de ahorro con su progreso |
+| GET | `/goals` | Bearer | Lista metas no eliminadas (`include_archived=false` por defecto) con progreso agregado en lote |
+| GET | `/goals/{goal_id}` | Bearer | Devuelve una meta no eliminada con su progreso (`404` si falta o fue eliminada) |
+| POST | `/goals/{goal_id}/archive` | Bearer | Archiva una meta de forma idempotente |
+| POST | `/goals/{goal_id}/unarchive` | Bearer | Desarchiva una meta de forma idempotente |
+| DELETE | `/goals/{goal_id}` | Bearer | Borrado lógico idempotente (`deleted_at`) de una meta |
+| PUT | `/goals/{goal_id}/contributions/{contribution_id}` | Bearer | Crea (201), actualiza o mueve (200) un aporte con tasas BCV y USDT |
+| GET | `/goals/{goal_id}/contributions` | Bearer | Lista aportes no eliminados de una meta por fecha descendente |
+| DELETE | `/goals/{goal_id}/contributions/{contribution_id}` | Bearer | Borrado lógico idempotente (`deleted_at`) de un aporte |
 
-El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md), [areas/income.md](areas/income.md), [areas/expenses.md](areas/expenses.md), [areas/products.md](areas/products.md) y [areas/shopping.md](areas/shopping.md).
+El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md), [areas/income.md](areas/income.md), [areas/expenses.md](areas/expenses.md), [areas/products.md](areas/products.md), [areas/shopping.md](areas/shopping.md) y [areas/goals.md](areas/goals.md).
 
 ## Decisiones
 

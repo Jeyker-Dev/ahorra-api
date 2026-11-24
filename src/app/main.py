@@ -25,6 +25,23 @@ from app.expenses.errors import (
 from app.expenses.errors import (
     RateNotAvailableForDate as ExpenseRateNotAvailableForDate,
 )
+from app.goals.api import router as goals_router
+from app.goals.errors import (
+    ContributionDeleted,
+    ContributionNotFound,
+    GoalArchived,
+    GoalDeleted,
+    GoalNameTaken,
+    GoalNotFound,
+    InvalidContributionAmount,
+    InvalidContributionNote,
+    InvalidGoalName,
+    InvalidGoalNote,
+    InvalidGoalTarget,
+)
+from app.goals.errors import (
+    RateNotAvailableForDate as GoalRateNotAvailableForDate,
+)
 from app.health.api import router as health_router
 from app.income.api import router as income_router
 from app.income.errors import (
@@ -177,6 +194,25 @@ def _register_shopping_error_handlers(application: FastAPI) -> None:
         application.add_exception_handler(exc_type, _make_detail_handler(status_code))
 
 
+def _register_goal_error_handlers(application: FastAPI) -> None:
+    mappings: tuple[tuple[type[Exception], int], ...] = (
+        (GoalNotFound, status.HTTP_404_NOT_FOUND),
+        (ContributionNotFound, status.HTTP_404_NOT_FOUND),
+        (GoalNameTaken, status.HTTP_409_CONFLICT),
+        (GoalDeleted, status.HTTP_409_CONFLICT),
+        (GoalArchived, status.HTTP_409_CONFLICT),
+        (ContributionDeleted, status.HTTP_409_CONFLICT),
+        (GoalRateNotAvailableForDate, status.HTTP_409_CONFLICT),
+        (InvalidGoalName, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidGoalTarget, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidGoalNote, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidContributionAmount, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (InvalidContributionNote, status.HTTP_422_UNPROCESSABLE_CONTENT),
+    )
+    for exc_type, status_code in mappings:
+        application.add_exception_handler(exc_type, _make_detail_handler(status_code))
+
+
 def create_app(
     settings: Settings | None = None,
     clock: Clock | None = None,
@@ -218,6 +254,7 @@ def create_app(
     _register_expense_error_handlers(application)
     _register_product_error_handlers(application)
     _register_shopping_error_handlers(application)
+    _register_goal_error_handlers(application)
     application.include_router(health_router)
     application.include_router(auth_router)
     application.include_router(users_router)
@@ -226,6 +263,7 @@ def create_app(
     application.include_router(expenses_router)
     application.include_router(products_router)
     application.include_router(shopping_router)
+    application.include_router(goals_router)
     return application
 
 

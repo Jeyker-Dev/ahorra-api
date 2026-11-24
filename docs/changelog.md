@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-23
+
+- **Fase 5 — Metas de ahorro**: dominio `goals/`, tablas `goals` (con índice único parcial `uq_goals_lower_name_active` sobre metas no eliminadas) y `goal_contributions` (con tasas históricas BCV y USDT y borrado lógico), servicio con upsert idempotente de metas y aportes, movimientos entre metas, progreso calculado al leer (en lote con una sola consulta `GROUP BY`), equivalentes en bolívares con las tasas de hoy (`null` si falta alguna) y endpoints bajo `/goals`.
+
 ## 2026-11-22
 
 - **Fase 4 — Productos y lista de compras**: `caracas_date` movida a `app.clock`; dominios `products/` y `shopping/`, tablas `products`, `product_prices`, `shopping_lists` y `shopping_list_items`; catálogo con `last_price`, archivo e historial de precios con tasas BCV y USDT; listas de compras con ítems, compra/corrección/reverso sincronizados por orden + idempotencia, totales estimados y comprados, cierre idempotente generando gasto en `expenses` mediante `uuid5`, recomendaciones por intervalo promedio de compra y endpoints bajo `/products` y `/shopping`.

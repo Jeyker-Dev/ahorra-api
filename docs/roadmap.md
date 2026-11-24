@@ -28,7 +28,7 @@ Catálogo propio, último precio, historial de precios y recomendación de compr
 
 ## Fase 5 — Metas
 
-Monto objetivo en dólares, avance y equivalentes en bolívares.
+Monto objetivo en dólares, avance y equivalentes en bolívares. Hecha.
 
 ## Más adelante
 

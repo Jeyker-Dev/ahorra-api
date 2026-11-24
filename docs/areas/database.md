@@ -157,6 +157,39 @@ Decisión de base: ADR-003.
 | `created_at` | `TIMESTAMPTZ` | UTC |
 | `updated_at` | `TIMESTAMPTZ` | UTC |
 
+### `goals`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `name` | `VARCHAR(50)` | `CHECK (char_length(btrim(name)) BETWEEN 1 AND 50)`; índice único parcial `uq_goals_lower_name_active` en `lower(name)` donde `deleted_at IS NULL` |
+| `target_usd` | `NUMERIC(18, 2)` | `CHECK (target_usd > 0)` |
+| `target_date` | `DATE` | Fecha objetivo opcional |
+| `note` | `VARCHAR(500)` | Opcional; `CHECK (note IS NULL OR (char_length(btrim(note)) BETWEEN 1 AND 500))` |
+| `archived_at` | `TIMESTAMPTZ` | `NULL` mientras está activa; UTC cuando se archiva |
+| `deleted_at` | `TIMESTAMPTZ` | `NULL` mientras está activa; UTC en borrado lógico |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
+### `goal_contributions`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `id` | `UUID` | Clave primaria, generada por el cliente (offline-first) |
+| `goal_id` | `UUID` | FK a `goals.id`, `ON DELETE RESTRICT`; índice compuesto `(goal_id, contributed_on)` |
+| `kind` | `VARCHAR(16)` | `CHECK (kind IN ('deposit', 'withdrawal'))` |
+| `amount` | `NUMERIC(18, 2)` | `CHECK (amount > 0)` |
+| `currency` | `VARCHAR(16)` | `CHECK (currency IN ('usd', 'ves'))` |
+| `contributed_on` | `DATE` | Fecha del aporte |
+| `note` | `VARCHAR(500)` | Opcional; `CHECK (note IS NULL OR (char_length(btrim(note)) BETWEEN 1 AND 500))` |
+| `bcv_rate_value` | `NUMERIC(18, 8)` | `CHECK (bcv_rate_value > 0)` |
+| `bcv_rate_date` | `DATE` | `value_date` de la tasa BCV vigente en `contributed_on` |
+| `usdt_rate_value` | `NUMERIC(18, 8)` | `CHECK (usdt_rate_value > 0)` |
+| `usdt_rate_date` | `DATE` | `value_date` de la tasa USDT vigente en `contributed_on` |
+| `deleted_at` | `TIMESTAMPTZ` | `NULL` mientras está activo; UTC en borrado lógico |
+| `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC |
+
 ## Reglas
 
 - Una migración de Alembic por cambio de esquema, con un mensaje descriptivo (`alembic revision --autogenerate -m "create users"`), revisada a mano antes de aplicarla.

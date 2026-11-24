@@ -10,6 +10,7 @@ from app.auth.models import RefreshTokenModel
 from app.config import get_settings
 from app.db import Base
 from app.expenses.models import ExpenseCategoryModel, ExpenseModel
+from app.goals.models import GoalContributionModel, GoalModel
 from app.income.models import IncomeOccurrenceModel, IncomeRuleModel
 from app.products.models import ProductModel, ProductPriceModel
 from app.rates.models import ExchangeRateModel
@@ -28,6 +29,8 @@ _MODELS = (
     ProductPriceModel,
     ShoppingListModel,
     ShoppingListItemModel,
+    GoalModel,
+    GoalContributionModel,
 )
 
 config = context.config
