@@ -1,0 +1,62 @@
+# Production stack for the VPS. Lives next to the production .env in ~/ahorra-api.
+# Usage: docker compose -f compose.prod.yml up -d
+# TLS and the public domain are handled by the shared edge proxy (~/proxy on the VPS),
+# which reaches the API through the external `edge` network as `ahorra-api:8000`.
+# Migrations run from scripts/deploy.sh before the stack restarts, not on container start.
+
+services:
+  api:
+    image: '${APP_IMAGE:-ahorra-api:latest}'
+    restart: unless-stopped
+    env_file: .env
+    command: ['uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--proxy-headers', '--forwarded-allow-ips', '*']
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      default:
+      edge:
+        aliases:
+          - ahorra-api
+
+  scheduler:
+    image: '${APP_IMAGE:-ahorra-api:latest}'
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TZ: America/Caracas
+    command: ['supercronic', '/app/docker/scheduler/crontab']
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+  db:
+    image: 'postgres:17'
+    restart: unless-stopped
+    env_file: .env
+    # No published ports: Docker bypasses ufw, so PostgreSQL stays reachable only inside this stack.
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+networks:
+  default:
+  edge:
+    name: edge
+    external: true
+
+volumes:
+  postgres_data:

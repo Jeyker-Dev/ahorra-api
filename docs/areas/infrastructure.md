@@ -70,3 +70,16 @@ testpaths = ["tests"]
 python_files = ["*_test.py"]
 asyncio_mode = "auto"
 ```
+
+## Producción (VPS)
+
+La API corre en el mismo VPS que FunWork y lifeforge-api, detrás del proxy compartido.
+
+- **Dominio**: `https://ahorra-api.duckdns.org`. El Caddy compartido (`~/proxy` en el VPS) termina TLS y redirige al contenedor `api` por la red Docker externa `edge`, con el alias `ahorra-api:8000`. El sitio vive en `~/proxy/sites/ahorra.caddy`.
+- **Stack**: `compose.prod.yml` levanta `api`, `scheduler` y `db`. La base no publica puertos; solo es accesible dentro del stack. Las migraciones no corren al arrancar el contenedor, sino desde `scripts/deploy.sh` antes de reiniciar.
+- **Directorio en el VPS** (`~/ahorra-api`): `.env` de producción (permisos 600, nunca en el repo), `src/` (clon del repo), `compose.prod.yml`, los scripts de backup y `backups/`.
+- **Deploy**: `scripts/deploy.sh` corre los checks locales y, por SSH, actualiza `src/`, construye la imagen `ahorra-api:<sha>`, hace un backup, migra y reinicia. Conserva la imagen anterior para volver atrás. El destino se configura con `AHORRA_DEPLOY_HOST` (o un `.deploy.env` ignorado por git).
+- **Backups**:
+  - Local: `backup_db.sh` guarda un `pg_dump` comprimido en `~/ahorra-api/backups` en cada deploy y todos los días a las 03:35 (hora del VPS), conservando los 14 más recientes.
+  - Externo: `backup_offsite.sh` sube el dump y el `.env` con restic al bucket S3 `ahorra-api-backups` todos los días a las 03:45, con retención de 7 diarios, 4 semanales y 6 mensuales. Las credenciales y la contraseña de restic están en `~/.config/backup/ahorra-api.env` (permisos 600). Sin la contraseña de restic los backups no se pueden restaurar.
+- **Usuario**: se crea una sola vez con `scripts/create_user.py` dentro del contenedor `api`.
