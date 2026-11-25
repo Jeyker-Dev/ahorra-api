@@ -37,6 +37,7 @@ class ProductModel(Base):
 
     __table_args__ = (
         Index("uq_products_lower_name", func.lower(name), unique=True),
+        Index("ix_products_updated_at", "updated_at"),
         CheckConstraint(
             "char_length(btrim(name)) BETWEEN 1 AND 80",
             name="ck_products_name",
@@ -82,9 +83,11 @@ class ProductPriceModel(Base):
     usdt_rate_value: Mapped[Decimal] = mapped_column(Numeric(18, 8))
     usdt_rate_date: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         Index("ix_product_prices_product_id_recorded_on", "product_id", "recorded_on"),
+        Index("ix_product_prices_updated_at", "updated_at"),
         Index(
             "uq_product_prices_list_item_id",
             "list_item_id",

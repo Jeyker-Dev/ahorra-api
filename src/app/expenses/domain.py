@@ -129,6 +129,12 @@ class ExpenseCategoryRepository(Protocol):
 
     async def update(self, category: ExpenseCategory) -> ExpenseCategory: ...
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ExpenseCategory]: ...
+
 
 class ExpenseRepository(Protocol):
     """Persistence port for expenses."""
@@ -145,6 +151,12 @@ class ExpenseRepository(Protocol):
         to_date: date,
         category_id: UUID | None = None,
     ) -> list[ExpenseWithCategory]: ...
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Expense]: ...
 
 
 @dataclass(frozen=True, slots=True)

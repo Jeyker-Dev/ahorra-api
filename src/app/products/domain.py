@@ -63,6 +63,7 @@ class PriceEntry:
     usdt_rate_value: Decimal
     usdt_rate_date: date
     created_at: datetime
+    updated_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,6 +138,12 @@ class ProductRepository(Protocol):
 
     async def update(self, product: Product) -> Product: ...
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Product]: ...
+
 
 class ProductPriceRepository(Protocol):
     """Persistence port for historical product price entries."""
@@ -161,6 +168,12 @@ class ProductPriceRepository(Protocol):
     ) -> list[PriceEntry]: ...
 
     async def list_purchase_refs_for_active_products(self) -> list[PurchaseEntryRef]: ...
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[PriceEntry]: ...
 
 
 @dataclass(frozen=True, slots=True)

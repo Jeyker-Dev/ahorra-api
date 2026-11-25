@@ -99,6 +99,8 @@ from app.shopping.errors import (
 from app.shopping.errors import (
     RateNotAvailableForDate as ShoppingRateNotAvailableForDate,
 )
+from app.sync.api import router as sync_router
+from app.sync.errors import InvalidSyncCursor
 from app.users.api import router as users_router
 
 
@@ -213,6 +215,13 @@ def _register_goal_error_handlers(application: FastAPI) -> None:
         application.add_exception_handler(exc_type, _make_detail_handler(status_code))
 
 
+def _register_sync_error_handlers(application: FastAPI) -> None:
+    application.add_exception_handler(
+        InvalidSyncCursor,
+        _make_detail_handler(status.HTTP_422_UNPROCESSABLE_CONTENT),
+    )
+
+
 def create_app(
     settings: Settings | None = None,
     clock: Clock | None = None,
@@ -255,6 +264,7 @@ def create_app(
     _register_product_error_handlers(application)
     _register_shopping_error_handlers(application)
     _register_goal_error_handlers(application)
+    _register_sync_error_handlers(application)
     application.include_router(health_router)
     application.include_router(auth_router)
     application.include_router(users_router)
@@ -264,6 +274,7 @@ def create_app(
     application.include_router(products_router)
     application.include_router(shopping_router)
     application.include_router(goals_router)
+    application.include_router(sync_router)
     return application
 
 

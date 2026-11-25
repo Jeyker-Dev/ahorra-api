@@ -128,6 +128,7 @@ Decisión de base: ADR-003.
 | `usdt_rate_value` | `NUMERIC(18, 8)` | `CHECK (usdt_rate_value > 0)` |
 | `usdt_rate_date` | `DATE` | `value_date` de la tasa USDT vigente |
 | `created_at` | `TIMESTAMPTZ` | UTC |
+| `updated_at` | `TIMESTAMPTZ` | UTC; backfill desde `created_at`, índice `ix_product_prices_updated_at` |
 
 ### `shopping_lists`
 
@@ -189,6 +190,19 @@ Decisión de base: ADR-003.
 | `deleted_at` | `TIMESTAMPTZ` | `NULL` mientras está activo; UTC en borrado lógico |
 | `created_at` | `TIMESTAMPTZ` | UTC |
 | `updated_at` | `TIMESTAMPTZ` | UTC |
+
+### `sync_tombstones`
+
+| Columna | Tipo | Reglas |
+|---|---|---|
+| `entity` | `VARCHAR(32)` | Parte de PK `(entity, id)`; `CHECK (entity IN ('income_rules', 'income_occurrences', 'expense_categories', 'expenses', 'products', 'product_prices', 'shopping_lists', 'shopping_list_items', 'goals', 'goal_contributions'))` |
+| `id` | `UUID` | ID de la fila eliminada físicamente; parte de PK `(entity, id)` |
+| `deleted_at` | `TIMESTAMPTZ` | UTC (`now()` del trigger); índice `ix_sync_tombstones_deleted_at` |
+
+### Índices y triggers de sincronización
+
+- Todas las tablas de dominio sincronizables (`income_rules`, `income_occurrences`, `expense_categories`, `expenses`, `products`, `product_prices`, `shopping_lists`, `shopping_list_items`, `goals`, `goal_contributions`) cuentan con un índice `ix_<table>_updated_at` sobre `updated_at`.
+- La función `record_sync_tombstone()` y los triggers `AFTER DELETE ... FOR EACH ROW` (`tr_income_occurrences_sync_tombstone`, `tr_shopping_list_items_sync_tombstone` y `tr_product_prices_sync_tombstone`) registran o actualizan (`ON CONFLICT (entity, id) DO UPDATE`) los borrados físicos en `sync_tombstones` dentro de la misma transacción del `DELETE` (ADR-010).
 
 ## Reglas
 

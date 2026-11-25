@@ -300,6 +300,12 @@ class ShoppingListRepository(Protocol):
 
     async def update(self, shopping_list: ShoppingList) -> ShoppingList: ...
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingList]: ...
+
 
 class ShoppingListItemRepository(Protocol):
     """Persistence port for shopping list items."""
@@ -323,6 +329,12 @@ class ShoppingListItemRepository(Protocol):
     async def list_non_deleted_item_ids(self) -> set[UUID]: ...
 
     async def list_bought_quantities_by_product(self) -> dict[UUID, list[Decimal]]: ...
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingListItem]: ...
 
 
 @dataclass(frozen=True, slots=True)

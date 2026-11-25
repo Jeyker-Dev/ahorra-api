@@ -77,6 +77,20 @@ class _InMemoryRuleRepository:
         self.items[rule.id] = rule
         return rule
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeRule]:
+        return sorted(
+            (
+                r
+                for r in self.items.values()
+                if r.updated_at <= until and (since is None or r.updated_at > since)
+            ),
+            key=lambda r: (r.updated_at, r.id),
+        )
+
 
 class _InMemoryOccurrenceRepository:
     def __init__(
@@ -145,6 +159,20 @@ class _InMemoryOccurrenceRepository:
         return sorted(
             matched,
             key=lambda item: (item.occurrence.expected_date, item.rule_name, item.occurrence.id),
+        )
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeOccurrence]:
+        return sorted(
+            (
+                o
+                for o in self.items.values()
+                if o.updated_at <= until and (since is None or o.updated_at > since)
+            ),
+            key=lambda o: (o.updated_at, o.id),
         )
 
 

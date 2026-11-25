@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import delete, or_, select
@@ -128,6 +128,18 @@ class SqlAlchemyIncomeRuleRepository:
         await self._session.commit()
         return _rule_to_domain(model)
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeRule]:
+        stmt = select(IncomeRuleModel).where(IncomeRuleModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(IncomeRuleModel.updated_at > since)
+        stmt = stmt.order_by(IncomeRuleModel.updated_at.asc(), IncomeRuleModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_rule_to_domain(model) for model in result.scalars().all()]
+
 
 class SqlAlchemyIncomeOccurrenceRepository:
     """SQLAlchemy implementation of IncomeOccurrenceRepository."""
@@ -242,3 +254,15 @@ class SqlAlchemyIncomeOccurrenceRepository:
             )
             for occ_model, rule_name in result.all()
         ]
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeOccurrence]:
+        stmt = select(IncomeOccurrenceModel).where(IncomeOccurrenceModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(IncomeOccurrenceModel.updated_at > since)
+        stmt = stmt.order_by(IncomeOccurrenceModel.updated_at.asc(), IncomeOccurrenceModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_occurrence_to_domain(model) for model in result.scalars().all()]

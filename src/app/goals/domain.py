@@ -157,6 +157,12 @@ class GoalRepository(Protocol):
 
     async def update(self, goal: Goal) -> Goal: ...
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Goal]: ...
+
 
 class GoalContributionRepository(Protocol):
     """Persistence port for goal contributions."""
@@ -176,6 +182,12 @@ class GoalContributionRepository(Protocol):
     ) -> tuple[GoalContribution, bool]: ...
 
     async def update(self, contribution: GoalContribution) -> GoalContribution: ...
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[GoalContribution]: ...
 
 
 @dataclass(frozen=True, slots=True)

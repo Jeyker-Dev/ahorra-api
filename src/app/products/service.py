@@ -139,6 +139,7 @@ class ProductsService:
                     usdt_rate_value=rates.usdt.value,
                     usdt_rate_date=rates.usdt.value_date,
                     created_at=now,
+                    updated_at=now,
                 )
             )
         return UpsertProductResult(product=saved, created=True)
@@ -154,6 +155,22 @@ class ProductsService:
     async def list_all_products(self) -> list[Product]:
         """Return all products, active first, then archived, ordered by name and id."""
         return await self._products.list_all()
+
+    async def list_products_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Product]:
+        """Return products changed in (since, until] ordered by (updated_at, id)."""
+        return await self._products.list_changed_between(since, until)
+
+    async def list_prices_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[PriceEntry]:
+        """Return product price entries changed in (since, until] ordered by (updated_at, id)."""
+        return await self._prices.list_changed_between(since, until)
 
     async def archive_product(self, product_id: UUID) -> Product:
         """Archive a product idempotently."""
@@ -190,7 +207,7 @@ class ProductsService:
 
         existing_entry = await self._prices.get_by_list_item_id(payload.list_item_id)
         if existing_entry is not None:
-            await self._update_purchase_entry(existing_entry, payload, price)
+            await self._update_purchase_entry(existing_entry, payload, price, now)
         else:
             candidate = PriceEntry(
                 id=uuid4(),
@@ -205,10 +222,11 @@ class ProductsService:
                 usdt_rate_value=payload.usdt_rate.value,
                 usdt_rate_date=payload.usdt_rate.value_date,
                 created_at=now,
+                updated_at=now,
             )
             saved_entry, inserted = await self._prices.insert_purchase_if_absent(candidate)
             if not inserted:
-                await self._update_purchase_entry(saved_entry, payload, price)
+                await self._update_purchase_entry(saved_entry, payload, price, now)
 
         return await self._sync_last_price_from_latest(product, now)
 
@@ -227,6 +245,7 @@ class ProductsService:
         entry: PriceEntry,
         payload: PurchasePriceInput,
         price: Decimal,
+        now: datetime,
     ) -> PriceEntry:
         return await self._prices.update_purchase(
             replace(
@@ -238,6 +257,7 @@ class ProductsService:
                 bcv_rate_date=payload.bcv_rate.value_date,
                 usdt_rate_value=payload.usdt_rate.value,
                 usdt_rate_date=payload.usdt_rate.value_date,
+                updated_at=now,
             )
         )
 
@@ -325,6 +345,7 @@ class ProductsService:
                     usdt_rate_value=rates.usdt.value,
                     usdt_rate_date=rates.usdt.value_date,
                     created_at=now,
+                    updated_at=now,
                 )
             )
         return UpsertProductResult(product=saved, created=False)

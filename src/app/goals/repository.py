@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -152,6 +153,18 @@ class SqlAlchemyGoalRepository:
             raise
         return _goal_to_domain(model)
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Goal]:
+        stmt = select(GoalModel).where(GoalModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(GoalModel.updated_at > since)
+        stmt = stmt.order_by(GoalModel.updated_at.asc(), GoalModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_goal_to_domain(model) for model in result.scalars().all()]
+
 
 class SqlAlchemyGoalContributionRepository:
     """SQLAlchemy implementation of GoalContributionRepository."""
@@ -267,3 +280,18 @@ class SqlAlchemyGoalContributionRepository:
         model.updated_at = contribution.updated_at
         await self._session.commit()
         return _contribution_to_domain(model)
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[GoalContribution]:
+        stmt = select(GoalContributionModel).where(GoalContributionModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(GoalContributionModel.updated_at > since)
+        stmt = stmt.order_by(
+            GoalContributionModel.updated_at.asc(),
+            GoalContributionModel.id.asc(),
+        )
+        result = await self._session.execute(stmt)
+        return [_contribution_to_domain(model) for model in result.scalars().all()]

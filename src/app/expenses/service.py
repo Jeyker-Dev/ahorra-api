@@ -150,6 +150,22 @@ class ExpenseService:
         """Return all categories, active first, then archived, ordered by name and id."""
         return await self._categories.list_all()
 
+    async def list_categories_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ExpenseCategory]:
+        """Return expense categories changed in (since, until] ordered by (updated_at, id)."""
+        return await self._categories.list_changed_between(since, until)
+
+    async def list_expenses_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Expense]:
+        """Return raw expenses changed in (since, until] ordered by (updated_at, id)."""
+        return await self._expenses.list_changed_between(since, until)
+
     async def archive_category(self, category_id: UUID) -> ExpenseCategory:
         """Archive a category idempotently."""
         existing = await self._require_category(category_id)

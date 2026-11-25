@@ -208,6 +208,22 @@ class ShoppingService:
         """Return non-deleted shopping lists optionally filtered by status."""
         return await self._lists.list_non_deleted(status)
 
+    async def list_lists_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingList]:
+        """Return shopping lists changed in (since, until] ordered by (updated_at, id)."""
+        return await self._lists.list_changed_between(since, until)
+
+    async def list_items_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingListItem]:
+        """Return shopping list items changed in (since, until] ordered by (updated_at, id)."""
+        return await self._items.list_changed_between(since, until)
+
     async def get_list(self, list_id: UUID) -> ShoppingListWithItems:
         """Return a non-deleted shopping list with its items enriched with product data."""
         shopping_list = await self._require_non_deleted_list(list_id)

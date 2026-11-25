@@ -30,6 +30,10 @@ Catálogo propio, último precio, historial de precios y recomendación de compr
 
 Monto objetivo en dólares, avance y equivalentes en bolívares. Hecha.
 
+## Fase 6 — Sincronización incremental
+
+Endpoint `GET /sync/changes` con ventana de seguridad, tombstones por triggers en PostgreSQL y lectura `REPEATABLE READ` para espejar el servidor en Drift. Hecha.
+
 ## Más adelante
 
 - La v2 de la app: escaneo de facturas, precios de supermercados y saldos de Binance.

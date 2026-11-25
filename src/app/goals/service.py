@@ -249,6 +249,22 @@ class GoalsService:
         goals = await self._goals.list_all()
         return await self._attach_progress(goals)
 
+    async def list_goals_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Goal]:
+        """Return goals changed in (since, until] ordered by (updated_at, id)."""
+        return await self._goals.list_changed_between(since, until)
+
+    async def list_contributions_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[GoalContribution]:
+        """Return goal contributions changed in (since, until] ordered by (updated_at, id)."""
+        return await self._contributions.list_changed_between(since, until)
+
     async def archive_goal(self, goal_id: UUID) -> GoalWithProgress:
         """Archive a non-deleted goal idempotently."""
         existing = await self._require_non_deleted_goal(goal_id)

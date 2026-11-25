@@ -154,6 +154,7 @@ async def _insert_price(
         "usdt_rate_value": Decimal("950.00000000"),
         "usdt_rate_date": date(2026, 11, 22),
         "created_at": now,
+        "updated_at": now,
     }
     params.update(overrides)
     async with engine.begin() as conn:
@@ -161,10 +162,11 @@ async def _insert_price(
             text(
                 "INSERT INTO product_prices "
                 "(id, product_id, price, currency, recorded_on, source, list_item_id, "
-                "bcv_rate_value, bcv_rate_date, usdt_rate_value, usdt_rate_date, created_at) "
+                "bcv_rate_value, bcv_rate_date, usdt_rate_value, usdt_rate_date, "
+                "created_at, updated_at) "
                 "VALUES (:id, :product_id, :price, :currency, :recorded_on, :source, "
                 ":list_item_id, :bcv_rate_value, :bcv_rate_date, :usdt_rate_value, "
-                ":usdt_rate_date, :created_at)"
+                ":usdt_rate_date, :created_at, :updated_at)"
             ),
             params,
         )
@@ -270,6 +272,7 @@ async def test_shopping_migration_columns_and_fks(test_database_url: str) -> Non
                 "usdt_rate_value",
                 "usdt_rate_date",
                 "created_at",
+                "updated_at",
             }
             assert set(await conn.run_sync(_get_columns, "shopping_lists")) == {
                 "id",

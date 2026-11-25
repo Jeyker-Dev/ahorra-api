@@ -3,7 +3,7 @@
 ## Conceptos
 
 - **Producto (`Product`)**: artículo reutilizable del catálogo con `id` (UUID generado por el cliente), `name` (1–80 caracteres sin espacios extremos ni en blanco, único sin distinguir mayúsculas/minúsculas), `unit` (`unit` | `kg` | `l`), `last_price` (`Decimal` > 0 cuantizado a 2 decimales con `ROUND_HALF_EVEN`, opcional) y `last_price_currency` (`usd` | `ves`, ambos nulos o ambos definidos), `archived_at` (`TIMESTAMPTZ` UTC cuando se archiva), `created_at` y `updated_at`. Los productos nunca se borran físicamente (`ON DELETE RESTRICT` en `product_prices` y `shopping_list_items`).
-- **Entrada de precio (`PriceEntry`)**: registro histórico con `id` (UUID del servidor), `product_id`, `price`, `currency`, `recorded_on` (`DATE` en `America/Caracas`), `source` (`manual` | `purchase`), `list_item_id` (obligatorio cuando `source = purchase`, nulo cuando `source = manual`, único cuando está definido), tasas vigentes ese día (`bcv_rate_value`, `bcv_rate_date`, `usdt_rate_value`, `usdt_rate_date`) y `created_at`. Solo es de inserción (append-only), salvo la corrección o reverso de compra desde `shopping`.
+- **Entrada de precio (`PriceEntry`)**: registro histórico con `id` (UUID del servidor), `product_id`, `price`, `currency`, `recorded_on` (`DATE` en `America/Caracas`), `source` (`manual` | `purchase`), `list_item_id` (obligatorio cuando `source = purchase`, nulo cuando `source = manual`, único cuando está definido), tasas vigentes ese día (`bcv_rate_value`, `bcv_rate_date`, `usdt_rate_value`, `usdt_rate_date`), `created_at` y `updated_at`. Solo es de inserción (append-only), salvo la corrección in-place (`updated_at`) o el reverso de compra desde `shopping`.
 
 ## Reglas de negocio (`ProductsService`)
 

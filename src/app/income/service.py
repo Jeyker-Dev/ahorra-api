@@ -159,6 +159,22 @@ class IncomeService:
         """Return all income rules ordered active first, then ended, by name."""
         return await self._rules.list_all()
 
+    async def list_rules_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeRule]:
+        """Return income rules changed in (since, until] ordered by (updated_at, id)."""
+        return await self._rules.list_changed_between(since, until)
+
+    async def list_occurrences_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeOccurrence]:
+        """Return income occurrences changed in (since, until] ordered by (updated_at, id)."""
+        return await self._occurrences.list_changed_between(since, until)
+
     async def get_rule(self, rule_id: UUID) -> IncomeRule:
         """Return a single income rule or raise IncomeRuleNotFound."""
         rule = await self._rules.get_by_id(rule_id)

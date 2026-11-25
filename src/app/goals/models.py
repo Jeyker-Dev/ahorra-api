@@ -44,6 +44,7 @@ class GoalModel(Base):
             unique=True,
             postgresql_where=text("deleted_at IS NULL"),
         ),
+        Index("ix_goals_updated_at", "updated_at"),
         CheckConstraint(
             "char_length(btrim(name)) BETWEEN 1 AND 50",
             name="ck_goals_name",
@@ -81,6 +82,7 @@ class GoalContributionModel(Base):
 
     __table_args__ = (
         Index("ix_goal_contributions_goal_id_contributed_on", "goal_id", "contributed_on"),
+        Index("ix_goal_contributions_updated_at", "updated_at"),
         CheckConstraint(
             "kind IN ('deposit', 'withdrawal')",
             name="ck_goal_contributions_kind",

@@ -96,6 +96,14 @@ src/app/
 │   ├── service.py           Casos de uso: metas, archivo/borrado lógico, aportes y progreso
 │   ├── schemas.py           Esquemas Pydantic HTTP de metas, progreso y aportes
 │   └── api.py               Router: /goals
+├── sync/
+│   ├── domain.py            SyncEntity, Tombstone, SyncChangesResult, puertos de lectura y DTOs crudos
+│   ├── errors.py            InvalidSyncCursor
+│   ├── models.py            SyncTombstoneModel (SQLAlchemy)
+│   ├── repository.py        SqlAlchemySyncTombstoneRepository
+│   ├── service.py           SyncService: ventana (since, until] con lag, validación UTC y precedencia
+│   ├── schemas.py           Esquemas Pydantic HTTP crudos y SyncChangesOut
+│   └── api.py               Router: GET /sync/changes (sesión REPEATABLE READ y adaptadores)
 └── health/
     └── api.py               Router: GET /health
 scripts/
@@ -121,7 +129,7 @@ Reglas entre capas:
 2. `service.py` depende de los puertos de `domain.py` (protocolos), nunca de una implementación concreta. Los colaboradores se inyectan por `__init__`.
 3. `repository.py` y `models.py` implementan los puertos con SQLAlchemy. Los modelos no salen de esa capa: el repositorio devuelve dataclasses de dominio.
 4. El borde HTTP (`api.py` más los manejadores registrados en `main.py` junto con `schemas.py`) traduce Pydantic a dominio, llama al servicio y convierte los errores de negocio en respuestas HTTP.
-5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users`, `income`, `expenses`, `products` y `goals` consultan `RatesService` mediante protocolos de tasa, y `shopping` consume `ProductsService`, `ExpenseService` y `RatesService` mediante protocolos en `shopping/domain.py` y adaptadores finos en `shopping/api.py`), nunca sus modelos ni su repositorio.
+5. Un dominio puede usar el `service.py` de otro (por ejemplo, `auth` usa `users`, `income`, `expenses`, `products` y `goals` consultan `RatesService` mediante protocolos de tasa, `shopping` consume `ProductsService`, `ExpenseService` y `RatesService` mediante protocolos en `shopping/domain.py` y adaptadores finos en `shopping/api.py`, y `sync` consulta los cambios de `IncomeService`, `ExpenseService`, `ProductsService`, `ShoppingService` y `GoalsService` mediante protocolos en `sync/domain.py` y adaptadores en `sync/api.py`), nunca sus modelos ni su repositorio.
 
 ## Convenciones críticas
 
@@ -186,8 +194,9 @@ Reglas entre capas:
 | PUT | `/goals/{goal_id}/contributions/{contribution_id}` | Bearer | Crea (201), actualiza o mueve (200) un aporte con tasas BCV y USDT |
 | GET | `/goals/{goal_id}/contributions` | Bearer | Lista aportes no eliminados de una meta por fecha descendente |
 | DELETE | `/goals/{goal_id}/contributions/{contribution_id}` | Bearer | Borrado lógico idempotente (`deleted_at`) de un aporte |
+| GET | `/sync/changes` | Bearer | Cambios incrementales `(since, until]` en todas las entidades y tombstones para Drift |
 
-El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md), [areas/income.md](areas/income.md), [areas/expenses.md](areas/expenses.md), [areas/products.md](areas/products.md), [areas/shopping.md](areas/shopping.md) y [areas/goals.md](areas/goals.md).
+El detalle de cada ruta y sus reglas está en [areas/auth.md](areas/auth.md), [areas/rates.md](areas/rates.md), [areas/income.md](areas/income.md), [areas/expenses.md](areas/expenses.md), [areas/products.md](areas/products.md), [areas/shopping.md](areas/shopping.md), [areas/goals.md](areas/goals.md) y [areas/sync.md](areas/sync.md).
 
 ## Decisiones
 
@@ -199,3 +208,4 @@ Los ADR viven en el módulo de Decisiones de FunWork, proyecto Ahorra.
 - ADR-004: JWT de vida corta y refresh token rotativo con detección de reúso.
 - ADR-005: carpetas por dominio y capas con puertos.
 - ADR-006: plantilla que se copia por app en lugar de una API compartida.
+- ADR-010: tombstones de sincronización escritos por triggers en PostgreSQL.

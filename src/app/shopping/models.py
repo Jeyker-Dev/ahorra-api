@@ -6,6 +6,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Numeric,
     String,
     UniqueConstraint,
@@ -37,6 +38,7 @@ class ShoppingListModel(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
+        Index("ix_shopping_lists_updated_at", "updated_at"),
         CheckConstraint(
             "char_length(btrim(name)) BETWEEN 1 AND 80",
             name="ck_shopping_lists_name",
@@ -73,6 +75,7 @@ class ShoppingListItemModel(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
+        Index("ix_shopping_list_items_updated_at", "updated_at"),
         UniqueConstraint(
             "list_id",
             "product_id",

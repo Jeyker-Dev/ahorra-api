@@ -89,6 +89,20 @@ class _InMemoryGoalRepository:
         self.items[goal.id] = goal
         return goal
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Goal]:
+        return sorted(
+            (
+                g
+                for g in self.items.values()
+                if g.updated_at <= until and (since is None or g.updated_at > since)
+            ),
+            key=lambda g: (g.updated_at, g.id),
+        )
+
 
 class _InMemoryContributionRepository:
     def __init__(self, initial: list[GoalContribution] | None = None) -> None:
@@ -138,6 +152,20 @@ class _InMemoryContributionRepository:
         self.update_calls += 1
         self.items[contribution.id] = contribution
         return contribution
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[GoalContribution]:
+        return sorted(
+            (
+                c
+                for c in self.items.values()
+                if c.updated_at <= until and (since is None or c.updated_at > since)
+            ),
+            key=lambda c: (c.updated_at, c.id),
+        )
 
 
 class _FakeRateLookup:

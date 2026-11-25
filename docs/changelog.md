@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-25
+
+- **Fase 6 — Sincronización incremental**: dominio `sync/` con endpoint `GET /sync/changes` en transacción `REPEATABLE READ` aislada de autenticación, ventana semiabierta `(since, until]` con `SYNC_SAFETY_LAG = 30 s`, validación estricta de cursor UTC (`InvalidSyncCursor` `422`), precedencia fila vs. tombstone, columna `updated_at` en `product_prices` (backfill desde `created_at`), índices `updated_at` en las 10 tablas sincronizables, tabla `sync_tombstones` y triggers `AFTER DELETE ... FOR EACH ROW` en PostgreSQL para `income_occurrences`, `shopping_list_items` y `product_prices` (ADR-010).
+
 ## 2026-11-23
 
 - **Fase 5 — Metas de ahorro**: dominio `goals/`, tablas `goals` (con índice único parcial `uq_goals_lower_name_active` sobre metas no eliminadas) y `goal_contributions` (con tasas históricas BCV y USDT y borrado lógico), servicio con upsert idempotente de metas y aportes, movimientos entre metas, progreso calculado al leer (en lote con una sola consulta `GROUP BY`), equivalentes en bolívares con las tasas de hoy (`null` si falta alguna) y endpoints bajo `/goals`.

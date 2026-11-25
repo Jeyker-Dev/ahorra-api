@@ -34,6 +34,7 @@ class ExpenseCategoryModel(Base):
 
     __table_args__ = (
         Index("uq_expense_categories_lower_name", func.lower(name), unique=True),
+        Index("ix_expense_categories_updated_at", "updated_at"),
         CheckConstraint(
             "char_length(btrim(name)) BETWEEN 1 AND 50",
             name="ck_expense_categories_name",
@@ -66,6 +67,7 @@ class ExpenseModel(Base):
     __table_args__ = (
         Index("ix_expenses_spent_on", "spent_on"),
         Index("ix_expenses_category_id_spent_on", "category_id", "spent_on"),
+        Index("ix_expenses_updated_at", "updated_at"),
         CheckConstraint("amount > 0", name="ck_expenses_amount_positive"),
         CheckConstraint("currency IN ('usd', 'ves')", name="ck_expenses_currency"),
         CheckConstraint(

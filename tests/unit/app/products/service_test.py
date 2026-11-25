@@ -86,6 +86,20 @@ class _InMemoryProductRepository:
         self.items[product.id] = product
         return product
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Product]:
+        return sorted(
+            (
+                p
+                for p in self.items.values()
+                if p.updated_at <= until and (since is None or p.updated_at > since)
+            ),
+            key=lambda p: (p.updated_at, p.id),
+        )
+
 
 class _InMemoryProductPriceRepository:
     def __init__(
@@ -162,6 +176,20 @@ class _InMemoryProductPriceRepository:
             and e.list_item_id is not None
             and self._products_repo.items[e.product_id].archived_at is None
         ]
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[PriceEntry]:
+        return sorted(
+            (
+                e
+                for e in self.entries.values()
+                if e.updated_at <= until and (since is None or e.updated_at > since)
+            ),
+            key=lambda e: (e.updated_at, e.id),
+        )
 
 
 class _FakeRateLookup:
@@ -581,6 +609,7 @@ async def test_price_history_orders_by_recorded_on_desc_created_at_desc_id_asc()
             usdt_rate_value=Decimal("950.00000000"),
             usdt_rate_date=date(2026, 11, 22),
             created_at=ts_same,
+            updated_at=ts_same,
         ),
         PriceEntry(
             id=id_low,
@@ -595,6 +624,7 @@ async def test_price_history_orders_by_recorded_on_desc_created_at_desc_id_asc()
             usdt_rate_value=Decimal("950.00000000"),
             usdt_rate_date=date(2026, 11, 22),
             created_at=ts_same,
+            updated_at=ts_same,
         ),
         PriceEntry(
             id=uuid4(),
@@ -609,6 +639,7 @@ async def test_price_history_orders_by_recorded_on_desc_created_at_desc_id_asc()
             usdt_rate_value=Decimal("950.00000000"),
             usdt_rate_date=date(2026, 11, 22),
             created_at=ts_new,
+            updated_at=ts_new,
         ),
         PriceEntry(
             id=uuid4(),
@@ -623,6 +654,7 @@ async def test_price_history_orders_by_recorded_on_desc_created_at_desc_id_asc()
             usdt_rate_value=Decimal("950.00000000"),
             usdt_rate_date=date(2026, 11, 20),
             created_at=ts_old,
+            updated_at=ts_old,
         ),
     ]
     product = Product(
@@ -701,6 +733,9 @@ async def test_record_purchase_price_creates_and_corrects_same_entry() -> None:
     assert corrected.last_price_currency == Currency.ves
     assert len(price_repo.entries) == 1
     assert next(iter(price_repo.entries)) == first_entry_id
+    entry = price_repo.entries[first_entry_id]
+    assert entry.created_at < entry.updated_at
+    assert entry.updated_at == clock.current
 
 
 async def test_delete_purchase_price_restores_previous_last_price() -> None:

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import delete, func, select, text
@@ -49,6 +49,7 @@ def _price_entry_to_domain(model: ProductPriceModel) -> PriceEntry:
         usdt_rate_value=model.usdt_rate_value,
         usdt_rate_date=model.usdt_rate_date,
         created_at=model.created_at,
+        updated_at=model.updated_at,
     )
 
 
@@ -146,6 +147,18 @@ class SqlAlchemyProductRepository:
             raise
         return _product_to_domain(model)
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Product]:
+        stmt = select(ProductModel).where(ProductModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(ProductModel.updated_at > since)
+        stmt = stmt.order_by(ProductModel.updated_at.asc(), ProductModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_product_to_domain(model) for model in result.scalars().all()]
+
 
 class SqlAlchemyProductPriceRepository:
     """SQLAlchemy implementation of ProductPriceRepository."""
@@ -167,6 +180,7 @@ class SqlAlchemyProductPriceRepository:
             usdt_rate_value=entry.usdt_rate_value,
             usdt_rate_date=entry.usdt_rate_date,
             created_at=entry.created_at,
+            updated_at=entry.updated_at,
         )
         self._session.add(model)
         await self._session.commit()
@@ -194,6 +208,7 @@ class SqlAlchemyProductPriceRepository:
                 usdt_rate_value=entry.usdt_rate_value,
                 usdt_rate_date=entry.usdt_rate_date,
                 created_at=entry.created_at,
+                updated_at=entry.updated_at,
             )
             .on_conflict_do_nothing(
                 index_elements=[ProductPriceModel.list_item_id],
@@ -222,6 +237,7 @@ class SqlAlchemyProductPriceRepository:
         model.bcv_rate_date = entry.bcv_rate_date
         model.usdt_rate_value = entry.usdt_rate_value
         model.usdt_rate_date = entry.usdt_rate_date
+        model.updated_at = entry.updated_at
         await self._session.commit()
         return _price_entry_to_domain(model)
 
@@ -297,3 +313,15 @@ class SqlAlchemyProductPriceRepository:
             for product_id, recorded_on, list_item_id in result.all()
             if list_item_id is not None
         ]
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[PriceEntry]:
+        stmt = select(ProductPriceModel).where(ProductPriceModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(ProductPriceModel.updated_at > since)
+        stmt = stmt.order_by(ProductPriceModel.updated_at.asc(), ProductPriceModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_price_entry_to_domain(model) for model in result.scalars().all()]

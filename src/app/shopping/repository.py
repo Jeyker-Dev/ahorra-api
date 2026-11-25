@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -108,6 +109,18 @@ class SqlAlchemyShoppingListRepository:
         model.updated_at = shopping_list.updated_at
         await self._session.commit()
         return _list_to_domain(model)
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingList]:
+        stmt = select(ShoppingListModel).where(ShoppingListModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(ShoppingListModel.updated_at > since)
+        stmt = stmt.order_by(ShoppingListModel.updated_at.asc(), ShoppingListModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_list_to_domain(model) for model in result.scalars().all()]
 
 
 class SqlAlchemyShoppingListItemRepository:
@@ -235,3 +248,15 @@ class SqlAlchemyShoppingListItemRepository:
         for product_id, quantity in result.all():
             grouped[product_id].append(quantity)
         return dict(grouped)
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingListItem]:
+        stmt = select(ShoppingListItemModel).where(ShoppingListItemModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(ShoppingListItemModel.updated_at > since)
+        stmt = stmt.order_by(ShoppingListItemModel.updated_at.asc(), ShoppingListItemModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_item_to_domain(model) for model in result.scalars().all()]

@@ -121,6 +121,12 @@ class IncomeRuleRepository(Protocol):
 
     async def update(self, rule: IncomeRule) -> IncomeRule: ...
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeRule]: ...
+
 
 class IncomeOccurrenceRepository(Protocol):
     """Persistence port for recurring income occurrences."""
@@ -144,6 +150,12 @@ class IncomeOccurrenceRepository(Protocol):
         to_date: date,
         status: OccurrenceStatus | None = None,
     ) -> list[OccurrenceWithRule]: ...
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[IncomeOccurrence]: ...
 
 
 @dataclass(frozen=True, slots=True)

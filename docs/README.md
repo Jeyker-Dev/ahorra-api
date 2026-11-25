@@ -14,6 +14,7 @@
 | [areas/products.md](areas/products.md) | Reglas del catálogo de productos, historial de precios y endpoints |
 | [areas/shopping.md](areas/shopping.md) | Reglas de listas de compras, ítems, totales, cierre, recomendaciones y coordinación entre dominios |
 | [areas/goals.md](areas/goals.md) | Reglas de metas de ahorro, aportes, cálculo de progreso y endpoints |
+| [areas/sync.md](areas/sync.md) | Sincronización incremental para Drift, ventana con safety lag, tombstones por trigger y límites |
 | [areas/database.md](areas/database.md) | Tablas, reglas de migraciones y riesgos |
 | [areas/infrastructure.md](areas/infrastructure.md) | Variables de entorno, Docker, salud y comandos de calidad |
 | Decisiones (FunWork) | Los ADR viven en el módulo de Decisiones de FunWork, proyecto Ahorra; no en este repo |

@@ -83,6 +83,20 @@ class _InMemoryListRepository:
         self.items[shopping_list.id] = shopping_list
         return shopping_list
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingList]:
+        return sorted(
+            (
+                lst
+                for lst in self.items.values()
+                if lst.updated_at <= until and (since is None or lst.updated_at > since)
+            ),
+            key=lambda lst: (lst.updated_at, lst.id),
+        )
+
 
 class _InMemoryItemRepository:
     def __init__(
@@ -145,6 +159,20 @@ class _InMemoryItemRepository:
             ):
                 grouped.setdefault(item.product_id, []).append(item.quantity)
         return grouped
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ShoppingListItem]:
+        return sorted(
+            (
+                item
+                for item in self.items.values()
+                if item.updated_at <= until and (since is None or item.updated_at > since)
+            ),
+            key=lambda item: (item.updated_at, item.id),
+        )
 
 
 class _FakeProductCatalog:

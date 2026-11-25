@@ -92,6 +92,20 @@ class _InMemoryCategoryRepository:
         self.items[category.id] = category
         return category
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ExpenseCategory]:
+        return sorted(
+            (
+                c
+                for c in self.items.values()
+                if c.updated_at <= until and (since is None or c.updated_at > since)
+            ),
+            key=lambda c: (c.updated_at, c.id),
+        )
+
 
 class _InMemoryExpenseRepository:
     def __init__(
@@ -147,6 +161,20 @@ class _InMemoryExpenseRepository:
             )
             for exp in matching
         ]
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Expense]:
+        return sorted(
+            (
+                e
+                for e in self.items.values()
+                if e.updated_at <= until and (since is None or e.updated_at > since)
+            ),
+            key=lambda e: (e.updated_at, e.id),
+        )
 
 
 class _FakeRateLookup:

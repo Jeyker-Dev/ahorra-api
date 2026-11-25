@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -137,6 +137,18 @@ class SqlAlchemyExpenseCategoryRepository:
             raise
         return _category_to_domain(model)
 
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[ExpenseCategory]:
+        stmt = select(ExpenseCategoryModel).where(ExpenseCategoryModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(ExpenseCategoryModel.updated_at > since)
+        stmt = stmt.order_by(ExpenseCategoryModel.updated_at.asc(), ExpenseCategoryModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_category_to_domain(model) for model in result.scalars().all()]
+
 
 class SqlAlchemyExpenseRepository:
     """SQLAlchemy implementation of ExpenseRepository."""
@@ -229,3 +241,15 @@ class SqlAlchemyExpenseRepository:
             )
             for exp_model, cat_name in result.all()
         ]
+
+    async def list_changed_between(
+        self,
+        since: datetime | None,
+        until: datetime,
+    ) -> list[Expense]:
+        stmt = select(ExpenseModel).where(ExpenseModel.updated_at <= until)
+        if since is not None:
+            stmt = stmt.where(ExpenseModel.updated_at > since)
+        stmt = stmt.order_by(ExpenseModel.updated_at.asc(), ExpenseModel.id.asc())
+        result = await self._session.execute(stmt)
+        return [_expense_to_domain(model) for model in result.scalars().all()]

@@ -39,6 +39,7 @@ class IncomeRuleModel(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
+        Index("ix_income_rules_updated_at", "updated_at"),
         CheckConstraint(
             "char_length(btrim(name)) BETWEEN 1 AND 100",
             name="ck_income_rules_name",
@@ -81,6 +82,7 @@ class IncomeOccurrenceModel(Base):
             name="uq_income_occurrences_rule_expected_date",
         ),
         Index("ix_income_occurrences_expected_date", "expected_date"),
+        Index("ix_income_occurrences_updated_at", "updated_at"),
         CheckConstraint(
             "expected_amount > 0",
             name="ck_income_occurrences_expected_amount_positive",

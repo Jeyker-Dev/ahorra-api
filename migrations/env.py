@@ -15,6 +15,7 @@ from app.income.models import IncomeOccurrenceModel, IncomeRuleModel
 from app.products.models import ProductModel, ProductPriceModel
 from app.rates.models import ExchangeRateModel
 from app.shopping.models import ShoppingListItemModel, ShoppingListModel
+from app.sync.models import SyncTombstoneModel
 from app.users.models import UserModel
 
 _MODELS = (
@@ -31,6 +32,7 @@ _MODELS = (
     ShoppingListItemModel,
     GoalModel,
     GoalContributionModel,
+    SyncTombstoneModel,
 )
 
 config = context.config
